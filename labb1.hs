@@ -2,7 +2,7 @@ import Test.QuickCheck
 
 {- Lab 1, 2019
    Authors: Matilda Blomquist och Joel Rudsberg
-   Lab group: ?
+   Lab group: 55
  -}
 
 power :: Integer -> Integer -> Integer
