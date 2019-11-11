@@ -12,6 +12,15 @@ module BlackJack where
     hand3 = Add (Card Ace Diamonds) hand2
     hand4 = Add (Card King Diamonds) hand
 
+    -- | Calc size of a hand
+    sizeSteps :: [Integer]
+    sizeSteps  = [size hand
+                 , size (Add (Card (Numeric 2) Hearts)
+                    (Add (Card Jack Spades) Empty))
+                 , 1 + size(Add(Card Jack Spades)Empty)
+                 , 1 + 1 + 0
+                 ,2]
+
     -- A1
     -- | Displays hand as a String
     display :: Hand -> String
