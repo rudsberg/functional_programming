@@ -19,7 +19,7 @@ module BlackJack where
                     (Add (Card Jack Spades) Empty))
                  , 1 + size(Add(Card Jack Spades)Empty)
                  , 1 + 1 + 0
-                 ,2]
+                 , 2]
 
     -- A1
     -- | Displays hand as a String
