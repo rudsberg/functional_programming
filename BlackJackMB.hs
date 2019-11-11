@@ -23,7 +23,7 @@ module BlackJack where
     display Empty = ""
     display (Add card hand) 
          | size hand == 0 = displayCard card
-         | size hand == 1 = "On hand: "++(displayCard card) ++ ", " ++(display hand) 
+         | otherwise = displayCard card ++ ", " ++ (display hand) 
     
     -- | Used for testing that display function behave as intended
     prop_display :: Hand -> Bool
