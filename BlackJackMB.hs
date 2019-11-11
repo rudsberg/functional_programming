@@ -2,65 +2,77 @@ module BlackJack where
     import Cards
     import RunGame
     import Test.QuickCheck
+    import Data.List
     
+    -- Test values 
     david = Card King Hearts
     death = Card Ace Spades
     hand = Add (Card (Numeric 2) Hearts)(Add (Card Jack Spades) Empty)
+    hand2 = Add death hand
     
     
-    {- | Calc size of a hand
+    -- | Calc size of a hand
     sizeSteps :: [Integer]
-    sizeSteps  = [size hand2
+    sizeSteps  = [size hand
                 , size (Add (Card (Numeric 2) Hearts)
                             (Add (Card Jack Spades) Empty))
-                , 0 + 1 + 1
+                , 1 + size(Add(Card Jack Spades)Empty)
+                , 1 + 1 + 0
                 ,2]
-    -}
     
     
     -- | Used to display a hand as strings
     display :: Hand -> String
     display Empty = ""
     display (Add card hand) 
-         | size hand == 0 = displayCard card
-         | otherwise = displayCard card ++ ", " ++ (display hand) 
+         | size hand == 0 = displayCard card ++ "\n"
+         | otherwise      = (displayCard card) ++ ", " ++(display hand) 
     
     -- | Used for testing that display function behave as intended
     prop_display :: Hand -> Bool
     prop_display Empty = display Empty == ""
-    --prop_display hand = how to test displaystring??
-    
-    {- ERROR WITH DISPLAY
-    *BlackJack> display hand
-    "On hand: 2 of Hearts, Jack of Spades"
-    *BlackJack> hand2 = Add death hand
-    *BlackJack> display hand2
-    "On hand: Ace of Spades, On hand: 2 of Hearts, Jack of Spades"
-    *BlackJack> hand3 = Add (Card Ace Hearts) hand2
-    *BlackJack> display hand3
-    "On hand: Ace of Hearts, On hand: Ace of Spades, On hand: 2 of Hearts, Jack of Spades"
-    -}
-    
+
     
     -- | Used to display a card as a string
     displayCard :: Card -> String
     displayCard (Card (Numeric i) suit) = show i ++ " of " ++ show suit
-    displayCard (Card rank suit) = show rank ++ " of " ++ show suit
-    
+    displayCard (Card rank suit)        = show rank ++ " of " ++ show suit 
+
     -- | Used for testing that display function behave as intended
     prop_displayCard :: Card -> Bool
     prop_displayCard (Card (Numeric i) suit) = displayCard (Card (Numeric i) suit) == show i ++ " of " ++ show suit
-    prop_displayCard (Card rank suit) = displayCard (Card rank suit) == show rank ++ " of " ++  show suit   -- pointless test?? 
+    prop_displayCard (Card rank suit)        = displayCard (Card rank suit) == show rank ++ " of " ++  show suit   -- pointless test?? 
     
-    
+
+    -- | get the value of a given hand
+    value :: Hand -> Integer
+    value hand = if (resultVal < 21) then resultVal else resultVal - (numberOfAces hand * 10)
+        where resultVal = initialValue hand
+  
+    -- | get the iniial value of a given hand
+    initialValue :: Hand -> Integer
+    initialValue Empty           = 0
+    initialValue (Add card hand) = valueRank (rank card) + value hand 
+
     -- | get the value of given rank
     valueRank :: Rank -> Integer
-    valueRank r | r == King || r == Queen || r == Jack = 10
-    valueRank Ace = 11
+    valueRank Ace         = 11
     valueRank (Numeric i) = i
+    valueRank r | r == King || r == Queen || r == Jack = 10
     
     -- | Calculates number of Aces in a given hand
     numberOfAces :: Hand -> Integer
-    numberOfAces Empty = 0
+    numberOfAces Empty           = 0
     numberOfAces (Add card hand) = if (rank card == Ace) then 1 + numberOfAces hand else 0 + numberOfAces hand 
-    
+
+    maxValue = 21
+
+    -- | Checks if the users score is > 21, used to decide if a user has lost the game
+    gameOver :: Hand -> Bool
+    gameOver hand = value hand > maxValue
+
+    -- | Used to decide if player or bank has won (order dependent)
+    winner :: Hand -> Hand -> Player
+    winner guest bank | gameOver guest = Bank
+                      | gameOver bank  = Guest -- gameOver guest is already tested
+                      | otherwise if value guest > value bank then Guest else Bank
