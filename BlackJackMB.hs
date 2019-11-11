@@ -73,7 +73,6 @@ module BlackJack where
 
     -- | Used to decide if player or bank has won (order dependent)
     winner :: Hand -> Hand -> Player
-    winner guest bank | gameOver guest           = Bank
-                      | gameOver bank            = Guest -- gameOver guest is already tested
-                      | value guest > value bank = Guest
-                      | value guest < value bank = Bank
+    winner guest bank | gameOver guest = Bank
+                      | gameOver bank  = Guest -- gameOver guest is already tested
+                      | otherwise if value guest > value bank then Guest else Bank
