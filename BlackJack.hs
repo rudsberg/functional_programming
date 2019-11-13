@@ -41,6 +41,7 @@ module BlackJack where
 
     -- | Converts a hand into list of cards representing the hand.
     handAsCardList :: Hand -> [Card]
+    handAsCardList Empty = []
     handAsCardList (Add card hand)
         | size hand == 0    = card : []
         | otherwise         = handAsCardList hand
