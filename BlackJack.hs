@@ -89,9 +89,9 @@ module BlackJack where
 
     -- B1
     (<+) :: Hand -> Hand -> Hand
-    (<+) Empty Empty           = Empty
-    (<+) Empty hand            = hand
-    (<+) hand Empty            = hand
+    (<+) Empty Empty            = Empty
+    (<+) Empty hand             = hand
+    (<+) hand Empty             = hand
     (<+) (Add card hand1) hand2 = Add card (hand1 <+ hand2) 
 
     prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
@@ -102,13 +102,33 @@ module BlackJack where
 
     -- B2
     fullDeck :: Hand
-    fullDeck = undefined
+    fullDeck = cardsToHand (allCardsOfSuit Hearts) <+
+               cardsToHand (allCardsOfSuit Spades) <+
+               cardsToHand (allCardsOfSuit Diamonds) <+
+               cardsToHand (allCardsOfSuit Clubs)
 
-    allCards :: [Card]
-    allCards = allCardsOfSuit Hearts ++ allCardsOfSuit Spades ++ allCardsOfSuit Diamonds ++ allCardsOfSuit Clubs
+    cardsToHand :: [Card] -> Hand
+    cardsToHand []           = Empty
+    cardsToHand (card:cards) = Add card (cardsToHand cards)
     
     allCardsOfSuit :: Suit -> [Card]
     allCardsOfSuit s = [Card r s | r <- allRankTypes]
 
     allRankTypes :: [Rank]
     allRankTypes = [Numeric x | x <- [2..10]] ++ [y | y <- [Jack, Queen, King, Ace]]
+
+    -- B3
+    draw :: Hand -> Hand -> (Hand, Hand)
+    draw Empty hand              = error "draw: The deck is empty."
+    draw (Add card hand) Empty   = (hand, Add card Empty) 
+    draw (Add card1 hand1) hand2 = (hand1, Add card1 hand2)
+
+    -- B4
+    playBank :: Hand -> Hand
+    playBank deck = playBankHelper deck Empty
+
+    playBankHelper :: Hand -> Hand -> Hand
+    playBankHelper deck hand 
+        | value biggerHand >= 16 = biggerHand
+        | otherwise              = playBankHelper smallerDeck biggerHand
+        where (smallerDeck, biggerHand) = draw deck hand
