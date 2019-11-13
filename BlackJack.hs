@@ -85,3 +85,7 @@ module BlackJack where
         | otherwise                   = if (value guestHand > value bankHand) then Guest else Bank
         where bankFail  = gameOver bankHand
               guestFail = gameOver guestHand
+
+    -- B1
+    (<+) :: Hand -> Hand -> Hand
+    (<+) = undefined
