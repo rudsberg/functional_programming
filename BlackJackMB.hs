@@ -103,8 +103,11 @@ module BlackJack where
 
     -- | Returns a full deck
     fullDeck :: Hand
-    fullDeck = cardsToHand deck 
-        where deck = cardList Hearts ++ cardList Clubs ++ cardList Diamonds ++ cardList Spades
+    fullDeck = fullSuit Hearts <+ fullSuit Clubs <+ fullSuit Diamonds <+ fullSuit Spades
+
+    -- | Used to create a full suit of cards as a hand
+    fullSuit :: Suit -> Hand 
+    fullSuit s = cardsToHand (cardList s)
 
     -- | Return all ranks in one suit. Used to create a new deck
     rankList :: [Rank]
