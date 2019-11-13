@@ -26,23 +26,26 @@ module BlackJack where
     display Empty = ""
     display (Add card hand) 
          | size hand == 0 = displayCard card ++ "\n"
-         | otherwise      = (displayCard card) ++ ", " ++(display hand) 
+         | otherwise      = (displayCard card) ++ "\n" ++(display hand) 
     
-    -- | Used for testing that display function behave as intended
+    -- | Used for testing that display function behave as intended.
     prop_display :: Hand -> Bool
     prop_display Empty = display Empty == ""
-
+    prop_display (Add card hand) = and [displayCard x `isInfixOf` display hand | x <- handAsCardList hand]
+   
+    -- | Converts a hand into list of cards representing the hand.
+    handAsCardList :: Hand -> [Card]
+    handAsCardList Empty = []
+    handAsCardList (Add card hand)
+        | size hand == 0    = card : []
+        | otherwise         = handAsCardList hand
+         
     
     -- | Used to display a card as a string
     displayCard :: Card -> String
     displayCard (Card (Numeric i) suit) = show i ++ " of " ++ show suit
     displayCard (Card rank suit)        = show rank ++ " of " ++ show suit 
-
-    -- | Used for testing that display function behave as intended
-    prop_displayCard :: Card -> Bool
-    prop_displayCard (Card (Numeric i) suit) = displayCard (Card (Numeric i) suit) == show i ++ " of " ++ show suit
-    prop_displayCard (Card rank suit)        = displayCard (Card rank suit) == show rank ++ " of " ++  show suit   -- pointless test?? 
-    
+ 
 
     -- | get the value of a given hand
     value :: Hand -> Integer
@@ -75,4 +78,43 @@ module BlackJack where
     winner :: Hand -> Hand -> Player
     winner guest bank | gameOver guest = Bank
                       | gameOver bank  = Guest -- gameOver guest is already tested
-                      | otherwise if value guest > value bank then Guest else Bank
+                      | otherwise      = if value guest > value bank then Guest else Bank
+
+    -----------2B----------------------------------------
+
+
+
+    -- | Given to hands, put the first one on top of the other
+    (<+) :: Hand -> Hand -> Hand
+    (<+) Empty Empty = Empty
+    (<+) Empty hand = hand
+    (<+) hand Empty = hand
+    (<+) (Add card hand1) hand2 = Add card (hand1 <+ hand2)
+
+    -- | Used to test associativity of '<+' operator
+    prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
+    prop_onTopOf_assoc p1 p2 p3 =
+        p1<+(p2<+p3) == (p1<+p2)<+p3
+
+    -- | Used to test that size of two combined hands equals the sum of the size of the individual hands
+    prop_size_onTopOf :: Hand -> Hand -> Bool
+    prop_size_onTopOf hand1 hand2 = (size hand1 + size hand2) == size (hand1 <+ hand2)
+
+
+    -- | Returns a full deck
+    fullDeck :: Hand
+    fullDeck = cardsToHand deck 
+        where deck = cardList Hearts ++ cardList Clubs ++ cardList Diamonds ++ cardList Spades
+
+    -- | Return all ranks in one suit. Used to create a new deck
+    rankList :: [Rank]
+    rankList = [Numeric i | i <- [2..10]] ++ [r | r <- [Jack, Queen, King, Ace]]
+
+    -- | Return all cards belonging to a given suit. Used to create a new deck
+    cardList :: Suit -> [Card]
+    cardList s = [Card r s | r <- rankList]
+
+    -- | Converts a list of cards to a hand
+    cardsToHand :: [Card] -> Hand
+    cardsToHand []     = Empty
+    cardsToHand (x:xs) = Add x (cardsToHand xs)
