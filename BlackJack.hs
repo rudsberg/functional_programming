@@ -89,4 +89,26 @@ module BlackJack where
 
     -- B1
     (<+) :: Hand -> Hand -> Hand
-    (<+) = undefined
+    (<+) Empty Empty           = Empty
+    (<+) Empty hand            = hand
+    (<+) hand Empty            = hand
+    (<+) (Add card hand1) hand2 = Add card (hand1 <+ hand2) 
+
+    prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
+    prop_onTopOf_assoc p1 p2 p3 = p1<+(p2<+p3) == (p1<+p2)<+p3
+
+    prop_size_onTopOf :: Hand -> Hand -> Bool
+    prop_size_onTopOf hand1 hand2 = (size hand1 + size hand2) == size (hand1 <+ hand2)
+
+    -- B2
+    fullDeck :: Hand
+    fullDeck = undefined
+
+    allCards :: [Card]
+    allCards = allCardsOfSuit Hearts ++ allCardsOfSuit Spades ++ allCardsOfSuit Diamonds ++ allCardsOfSuit Clubs
+    
+    allCardsOfSuit :: Suit -> [Card]
+    allCardsOfSuit s = [Card r s | r <- allRankTypes]
+
+    allRankTypes :: [Rank]
+    allRankTypes = [Numeric x | x <- [2..10]] ++ [y | y <- [Jack, Queen, King, Ace]]
