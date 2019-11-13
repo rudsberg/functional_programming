@@ -3,6 +3,7 @@ module BlackJack where
     import RunGame
     import Test.QuickCheck
     import Data.List
+    import System.Random
     
     -- Hands for testing 
     david = Card King Hearts
@@ -132,3 +133,27 @@ module BlackJack where
         | value biggerHand >= 16 = biggerHand
         | otherwise              = playBankHelper smallerDeck biggerHand
         where (smallerDeck, biggerHand) = draw deck hand
+
+    -- B5
+    shuffleDeck :: StdGen -> Hand -> Hand
+    shuffleDeck = undefined
+
+    --deck = h5, k7, s9
+    --removeCard 1 deck
+
+    --removeCard :: Integer -> Hand -> Hand
+    --removeCard i (Add card hand)
+    --    | _ Empty = Empty
+    --    | i == runningTotal = removeCard runningTotal (Add Empty hand)
+    --    | otherwise = removeCard i startHand
+    --    where (runningTotal, runningHand) = (if (runningTotal == 0) then 0 else runningTotal + 1, Add card hand)
+
+    prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+    prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffleDeck g h
+
+    belongsTo :: Card -> Hand -> Bool
+    c `belongsTo` Empty = False
+    c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+    prop_size_shuffle :: StdGen -> Hand -> Bool
+    prop_size_shuffle = undefined
