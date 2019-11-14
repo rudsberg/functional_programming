@@ -4,7 +4,7 @@ module BlackJack where
     import Test.QuickCheck
     import System.Random
     import Data.List
-    
+
     -- Test values 
     david = Card King Hearts
     death = Card Ace Spades
@@ -126,6 +126,7 @@ module BlackJack where
     cardsToHand []     = Empty
     cardsToHand (x:xs) = Add x (cardsToHand xs)
 
+
     -- | Given a deck and a hand, draw a card from the deck and put it on the hand
     draw :: Hand -> Hand -> (Hand,Hand)
     draw Empty _ = error "Can not draw a card from an empty deck!"
@@ -141,6 +142,7 @@ module BlackJack where
     playBankHelper deck hand = if value biggerHand >= 16 then biggerHand else playBankHelper smallerDeck biggerHand 
          where (smallerDeck,biggerHand) = draw deck hand
 
+
     -- | Used to shuffle the deck
     shuffleDeck :: StdGen -> Hand -> Hand
     shuffleDeck _ Empty   = Empty
@@ -149,26 +151,27 @@ module BlackJack where
                (pickedCard, newDeck) = (pick n deck, removeCard n deck)
 
 
-    -- | Given a number, pick that card from the hand 
+    -- | Given a number, pick and return that card from the given hand 
     pick :: Int -> Hand -> Card
-    pick n (Add card deck) | size deck == 0  = card
-                           | n == 0          = error "you can not pick zero cards"
-                           | n == 1          = card  -- 1 is first card in a hand, zero index doesn´t make sense in this case
-                           | otherwise       = pick (n-1) deck
+    pick n (Add card deck) | size deck == 0   = card
+                           | n == 0 || n > 53 = Empty   -- only input between 1-52 is valid
+                           | n == 1           = card    -- 1 is first card in a hand
+                           | otherwise        = pick (n-1) deck
 
     -- | Given a number, remove that card from the hand and return the deck
     removeCard :: Int -> Hand -> Hand
-    removeCard n (Add card deck)  | size deck == 0  = Empty
-                                  | n == 0          = error "you can not remove zero cards"
-                                  | n == 1          = deck   -- 1 is first card in a hand, zero index doesn´t make sense in this case
-                                  | otherwise       = (Add card savedHand) <+ (removeCard (n-1) deck)
+    removeCard n (Add card deck)  | size deck == 0   = Empty
+                                  | n == 0 || n > 53 = Empty  -- only input between 1-52 is valid
+                                  | n == 1           = deck   -- 1 is first card in a hand
+                                  | otherwise        = (Add card savedHand) <+ (removeCard (n-1) deck)
             where savedHand = Empty
 
 
+    -- | Test if all cards is still in deck after shuffle
     prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
     prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffleDeck g h
 
-    -- 
+    -- | Helper function used to check if a card belongs to a hand
     belongsTo :: Card -> Hand -> Bool
     c `belongsTo` Empty = False 
     c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
