@@ -3,6 +3,7 @@ module BlackJack where
     import RunGame
     import Test.QuickCheck
     import Data.List
+    import System.Random
     
     -- Hands for testing 
     david = Card King Hearts
@@ -86,3 +87,73 @@ module BlackJack where
         | otherwise                   = if (value guestHand > value bankHand) then Guest else Bank
         where bankFail  = gameOver bankHand
               guestFail = gameOver guestHand
+
+    -- B1
+    (<+) :: Hand -> Hand -> Hand
+    (<+) Empty Empty            = Empty
+    (<+) Empty hand             = hand
+    (<+) hand Empty             = hand
+    (<+) (Add card hand1) hand2 = Add card (hand1 <+ hand2) 
+
+    prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
+    prop_onTopOf_assoc p1 p2 p3 = p1<+(p2<+p3) == (p1<+p2)<+p3
+
+    prop_size_onTopOf :: Hand -> Hand -> Bool
+    prop_size_onTopOf hand1 hand2 = (size hand1 + size hand2) == size (hand1 <+ hand2)
+
+    -- B2
+    fullDeck :: Hand
+    fullDeck = cardsToHand (allCardsOfSuit Hearts) <+
+               cardsToHand (allCardsOfSuit Spades) <+
+               cardsToHand (allCardsOfSuit Diamonds) <+
+               cardsToHand (allCardsOfSuit Clubs)
+
+    cardsToHand :: [Card] -> Hand
+    cardsToHand []           = Empty
+    cardsToHand (card:cards) = Add card (cardsToHand cards)
+    
+    allCardsOfSuit :: Suit -> [Card]
+    allCardsOfSuit s = [Card r s | r <- allRankTypes]
+
+    allRankTypes :: [Rank]
+    allRankTypes = [Numeric x | x <- [2..10]] ++ [y | y <- [Jack, Queen, King, Ace]]
+
+    -- B3
+    draw :: Hand -> Hand -> (Hand, Hand)
+    draw Empty hand              = error "draw: The deck is empty."
+    draw (Add card hand) Empty   = (hand, Add card Empty) 
+    draw (Add card1 hand1) hand2 = (hand1, Add card1 hand2)
+
+    -- B4
+    playBank :: Hand -> Hand
+    playBank deck = playBankHelper deck Empty
+
+    playBankHelper :: Hand -> Hand -> Hand
+    playBankHelper deck hand 
+        | value biggerHand >= 16 = biggerHand
+        | otherwise              = playBankHelper smallerDeck biggerHand
+        where (smallerDeck, biggerHand) = draw deck hand
+
+    -- B5
+    shuffleDeck :: StdGen -> Hand -> Hand
+    shuffleDeck = undefined
+
+    --deck = h5, k7, s9
+    --removeCard 1 deck
+
+    --removeCard :: Integer -> Hand -> Hand
+    --removeCard i (Add card hand)
+    --    | _ Empty = Empty
+    --    | i == runningTotal = removeCard runningTotal (Add Empty hand)
+    --    | otherwise = removeCard i startHand
+    --    where (runningTotal, runningHand) = (if (runningTotal == 0) then 0 else runningTotal + 1, Add card hand)
+
+    prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+    prop_shuffle_sameCards g c h = c `belongsTo` h == c `belongsTo` shuffleDeck g h
+
+    belongsTo :: Card -> Hand -> Bool
+    c `belongsTo` Empty = False
+    c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+    prop_size_shuffle :: StdGen -> Hand -> Bool
+    prop_size_shuffle = undefined
