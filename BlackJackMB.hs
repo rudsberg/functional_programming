@@ -11,8 +11,9 @@ module BlackJack where
     hand = Add (Card (Numeric 2) Hearts)(Add (Card Jack Spades) Empty)
     hand2 = Add death hand
     hand3 = Add david hand2
-
     deck = fullDeck
+
+    ------------------- 2A --------------------
     
     
     -- | Calc size of a hand
@@ -81,10 +82,10 @@ module BlackJack where
     -- | Used to decide if player or bank has won (order dependent)
     winner :: Hand -> Hand -> Player
     winner guest bank | gameOver guest = Bank
-                      | gameOver bank  = Guest -- gameOver guest is already tested
+                      | gameOver bank  = Guest 
                       | otherwise      = if value guest > value bank then Guest else Bank
 
-    -----------2B----------------------------------------
+    ------------------ 2B ------------------------
 
 
 
@@ -153,15 +154,15 @@ module BlackJack where
 
     -- | Given a number, pick and return that card from the given hand 
     pick :: Int -> Hand -> Card
-    pick n (Add card deck) | size deck == 0   = card
-                           | n == 0 || n > 53 = Empty   -- only input between 1-52 is valid
-                           | n == 1           = card    -- 1 is first card in a hand
-                           | otherwise        = pick (n-1) deck
+    pick n (Add card deck) | size deck == 0          = card 
+                           | n < 1 || n > size deck  = error "Not valid input, pick a number between 1 and 52"
+                           | n == 1                  = card             -- 1 is first card in a hand
+                           | otherwise               = pick (n-1) deck  
 
     -- | Given a number, remove that card from the hand and return the deck
     removeCard :: Int -> Hand -> Hand
     removeCard n (Add card deck)  | size deck == 0   = Empty
-                                  | n == 0 || n > 53 = Empty  -- only input between 1-52 is valid
+                                  | n < 1 || n > 52  = Empty  -- only input between 1-52 is valid
                                   | n == 1           = deck   -- 1 is first card in a hand
                                   | otherwise        = (Add card savedHand) <+ (removeCard (n-1) deck)
             where savedHand = Empty
@@ -180,6 +181,17 @@ module BlackJack where
     prop_size_shuffle :: StdGen -> Hand -> Bool
     prop_size_shuffle rand deck = size deck == size (shuffleDeck rand deck) 
 
- 
 
+    implementation = Interface {
+      iFullDeck = fullDeck,
+      iValue = value,
+      iDisplay = display,
+      iGameOver = gameOver,
+      iWinner = winner,
+      iDraw = draw,
+      iPlayBank = playBank,
+      iShuffle = shuffleDeck
+    }
 
+    main :: IO ()
+    main = runGame implementation
