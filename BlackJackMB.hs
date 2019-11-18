@@ -155,7 +155,6 @@ module BlackJack where
     -- | Given a number, pick and return that card from the given hand 
     pick :: Int -> Hand -> Card
     pick n (Add card deck) | size deck == 0          = card 
-                           | n < 1 || n > size deck  = error "Not valid input, pick a number between 1 and 52"
                            | n == 1                  = card             -- 1 is first card in a hand
                            | otherwise               = pick (n-1) deck  
 
