@@ -36,7 +36,7 @@ module BlackJack where
     -- | Used for testing that display function behave as intended.
     prop_display :: Hand -> Bool
     prop_display Empty = display Empty == ""
-    prop_display (Add card hand) = and [displayCard x `isInfixOf` display hand | x <- handAsCardList hand]
+    prop_display (Add _ hand) = and [displayCard x `isInfixOf` display hand | x <- handAsCardList hand]
    
     -- | Converts a hand into list of cards representing the hand.
     handAsCardList :: Hand -> [Card]
@@ -54,7 +54,7 @@ module BlackJack where
 
     -- | get the value of a given hand
     value :: Hand -> Integer
-    value hand = if (resultVal < 21) then resultVal else resultVal - (numberOfAces hand * 10)
+    value hand = if (resultVal <= 21) then resultVal else resultVal - (numberOfAces hand * 10)
         where resultVal = initialValue hand
   
     -- | get the iniial value of a given hand
@@ -66,7 +66,7 @@ module BlackJack where
     valueRank :: Rank -> Integer
     valueRank Ace         = 11
     valueRank (Numeric i) = i
-    valueRank r | r == King || r == Queen || r == Jack = 10
+    valueRank _           = 10
     
     -- | Calculates number of Aces in a given hand
     numberOfAces :: Hand -> Integer
@@ -83,7 +83,7 @@ module BlackJack where
     winner :: Hand -> Hand -> Player
     winner guest bank | gameOver guest = Bank
                       | gameOver bank  = Guest 
-                      | otherwise      = if value guest > value bank then Guest else Bank
+    winner guest bank = if value guest > value bank then Guest else Bank
 
     ------------------ 2B ------------------------
 
