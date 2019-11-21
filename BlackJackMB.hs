@@ -57,10 +57,10 @@ module BlackJack where
     value hand = if (resultVal <= 21) then resultVal else resultVal - (numberOfAces hand * 10)
         where resultVal = initialValue hand
   
-    -- | get the iniial value of a given hand
+    -- | get the initial value of a given hand
     initialValue :: Hand -> Integer
     initialValue Empty           = 0
-    initialValue (Add card hand) = valueRank (rank card) + value hand 
+    initialValue (Add card hand) = valueRank (rank card) + initialValue hand 
 
     -- | get the value of given rank
     valueRank :: Rank -> Integer
@@ -81,9 +81,10 @@ module BlackJack where
 
     -- | Used to decide if player or bank has won (order dependent)
     winner :: Hand -> Hand -> Player
-    winner guest bank | gameOver guest = Bank
-                      | gameOver bank  = Guest 
-    winner guest bank = if value guest > value bank then Guest else Bank
+    winner guest bank | gameOver guest           = Bank
+                      | gameOver bank            = Guest 
+                      | value guest > value bank = Guest
+                      | otherwise                = Bank
 
     ------------------ 2B ------------------------
 
