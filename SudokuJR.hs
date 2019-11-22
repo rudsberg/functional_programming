@@ -52,8 +52,7 @@ notFilled = Sudoku
 
 -- | allBlankSudoku is a sudoku with just blanks
 allBlankSudoku :: Sudoku
-allBlankSudoku = Sudoku $ replicate 9 blankRow
-  where blankRow = replicate 9 Nothing
+allBlankSudoku = Sudoku $ replicate 9 $ replicate 9 Nothing
 
 -- * A2
 
@@ -65,7 +64,7 @@ isSudoku (Sudoku sud)
   | any invalidLength sud = False
   | any invalidInt sud    = False
   | otherwise             = True
-  where invalidInt r      = any (\i -> i < Just 1 || i > Just 10) (filter (/= Nothing) r)
+  where invalidInt r      = any (\i -> i < Just 1 || i > Just 10) $ filter (/= Nothing) r
         invalidLength r   = length r /= 9 
 
 -- * A3
