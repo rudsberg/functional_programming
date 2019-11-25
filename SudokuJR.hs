@@ -2,6 +2,8 @@ module Sudoku where
 
 import Test.QuickCheck
 import Data.List
+import Data.Char
+import Data.Maybe
 
 ------------------------------------------------------------------------------
 
@@ -18,17 +20,16 @@ rows (Sudoku ms) = ms
 -- | A sample sudoku puzzle
 example :: Sudoku
 example =
-    Sudoku
-      [ [j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ]
-      , [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ]
-      , [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ]
-      , [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8]
-      , [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9]
-      , [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ]
-      , [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ]
-      , [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ]
-      , [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ]
-      ]
+  Sudoku
+    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
+     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
+     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
+     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
+     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
+     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
+     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
+     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
+     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
   where
     n = Nothing
     j = Just
@@ -81,16 +82,23 @@ isFilled (Sudoku sud) = all (\r -> (all (/= Nothing) r)) sud
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku = undefined
+printSudoku (Sudoku sud) = mapM_ putStrLn $ [rowAsString r | r <- sud]
+
+rowAsString :: Row -> String
+rowAsString row = map (\x -> if (x == Nothing) then '.' else intToDigit $ fromJust x) row
 
 -- * B2
 
 -- | readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
+--readSudoku :: FilePath -> IO ()
 readSudoku :: FilePath -> IO Sudoku
-readSudoku = undefined
+readSudoku fPath = do str <- readFile fPath
+                      let sud = Sudoku $ map convertStringToRow (lines str)
+                      if (isSudoku sud) then return sud else error "Not a valid sudoko"
 
-------------------------------------------------------------------------------
+convertStringToRow :: String -> Row
+convertStringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)) str
 
 -- * C1
 
