@@ -95,9 +95,6 @@ prop_Sudoku sud = isSudoku sud
 type Block = [Cell] -- a Row is also a Cell
 
 -- * D1
-b1, b2 :: Block
-b1 = [Just 1, Just 7, Nothing, Nothing, Just 3, Nothing, Nothing, Nothing, Just 2]
-b2 = [Just 1, Just 7, Nothing, Just 7, Just 3, Nothing, Nothing, Nothing, Just 2]
 
 isOkayBlock :: Block -> Bool
 isOkayBlock b = length numList == length (nub numList)
@@ -112,6 +109,7 @@ blocks (Sudoku rows) = rowBlocks ++ columnBlocks ++ squareBlocks
         columnBlocks = [map (!!b) rows | b <- [0..8]]
         squareBlocks = [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
 
+
 squareBlock :: [Row] -> (Int, Int) -> Block
 squareBlock allRows (ri, ci) = [takeCell allRows (r, c) | (r, c) <- cellIndexes]
   where cellIndexes = [(r, c) | r <- take 3 [ri*3 ..], c <- take 3 [ci*3 ..]]
@@ -120,9 +118,19 @@ takeCell :: [Row] -> (Int, Int) -> Cell
 takeCell rs (r, c) = (rs!!r)!!c
 
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths = undefined
+prop_blocks_lengths sud = length allBlocks == 27 && all (\b -> length b == 9) allBlocks
+  where allBlocks = blocks sud
 
 -- * D3
+
+isOkay :: Sudoku -> Bool
+isOkay (Sudoku rows) = okRows && okColumns && okBlocks
+  where okRows, okColumns, okBlocks :: Bool
+        okRows = all isOkayBlock rows   
+        okColumns = all isOkayBlock $ [map (!!b) rows | b <- [0..8]]
+        okBlocks = all isOkayBlock [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
+
+        
 
 -- Test data
 example :: Sudoku
@@ -154,9 +162,6 @@ notFilled = Sudoku
   , [Just 4, Just 9, Nothing]
   , [Just 3, Just 1, Just 3]
   ]
-
-isOkay :: Sudoku -> Bool
-isOkay = undefined
 
 
 ---- Part A ends here --------------------------------------------------------
