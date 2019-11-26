@@ -103,15 +103,16 @@ convertStringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitT
 -- * C1
 
 -- | cell generates an arbitrary cell in a Sudoku
-cell :: Gen (Cell)
-cell = undefined
-
+cell :: Gen Cell
+cell = frequency [(1, elements [Just n | n <- [1..9]]), (2, elements [Nothing])]
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
+
 instance Arbitrary Sudoku where
-  arbitrary = undefined
+  arbitrary = Sudoku <$> (vectorOf 9 (vectorOf 9 cell)) -- HOW DOES THIS WORK WITH FMAP?!
+
 
  -- hint: get to know the QuickCheck function vectorOf
  
