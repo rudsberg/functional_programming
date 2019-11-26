@@ -155,7 +155,7 @@ type Pos = (Int,Int)
 -- * E1
 
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks (Sudoku rs) = [(r, c) | r <- [0..8], c <- [0..8], takeCell rs (r, c) == Nothing]
 
 --prop_blanks_allBlanks :: ...
 --prop_blanks_allBlanks =
