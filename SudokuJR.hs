@@ -17,37 +17,6 @@ data Sudoku = Sudoku [Row]
 rows :: Sudoku -> [Row]
 rows (Sudoku ms) = ms
 
--- | A sample sudoku puzzle
-example :: Sudoku
-example =
-  Sudoku
-    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
-     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
-     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
-     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
-     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
-     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
-     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
-     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
-     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
-  where
-    n = Nothing
-    j = Just
-
--- Test data
-exRow :: Row
-exRow = [Just 1, Just 3, Nothing, Just 8]
-filled :: Sudoku
-filled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Just 3]
-  , [Just 3, Just 1, Just 3]
-  ]
-notFilled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Nothing]
-  , [Just 3, Just 1, Just 3]
-  ]
 
 -- * A1
 
@@ -119,29 +88,72 @@ instance Arbitrary Sudoku where
 -- * C3
 
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku = undefined
-  -- hint: this definition is simple!
+prop_Sudoku sud = isSudoku sud 
   
 ------------------------------------------------------------------------------
 
 type Block = [Cell] -- a Row is also a Cell
 
-
 -- * D1
+b1, b2 :: Block
+b1 = [Just 1, Just 7, Nothing, Nothing, Just 3, Nothing, Nothing, Nothing, Just 2]
+b2 = [Just 1, Just 7, Nothing, Just 7, Just 3, Nothing, Nothing, Nothing, Just 2]
 
 isOkayBlock :: Block -> Bool
-isOkayBlock = undefined
-
+isOkayBlock b = length numList == length (nub numList)
+  where numList = filter (/= Nothing) b
 
 -- * D2
 
 blocks :: Sudoku -> [Block]
-blocks = undefined
+blocks (Sudoku rows) = rowBlocks ++ columnBlocks ++ squareBlocks
+  where rowBlocks, columnBlocks, squareBlocks :: [Block]
+        rowBlocks = rows
+        columnBlocks = [map (!!b) rows | b <- [0..8]]
+        squareBlocks = [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
+
+squareBlock :: [Row] -> (Int, Int) -> Block
+squareBlock allRows (ri, ci) = [takeCell allRows (r, c) | (r, c) <- cellIndexes]
+  where cellIndexes = [(r, c) | r <- take 3 [ri*3 ..], c <- take 3 [ci*3 ..]]
+
+takeCell :: [Row] -> (Int, Int) -> Cell
+takeCell rs (r, c) = (rs!!r)!!c
 
 prop_blocks_lengths :: Sudoku -> Bool
 prop_blocks_lengths = undefined
 
 -- * D3
+
+-- Test data
+example :: Sudoku
+example =
+  Sudoku
+    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
+     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
+     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
+     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
+     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
+     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
+     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
+     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
+     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
+  where
+    n = Nothing
+    j = Just
+
+exRow :: Row
+exRow = [Just 1, Just 3, Nothing, Just 8]
+filled :: Sudoku
+filled = Sudoku 
+  [ [Just 3, Just 1, Just 3]
+  , [Just 4, Just 9, Just 3]
+  , [Just 3, Just 1, Just 3]
+  ]
+notFilled = Sudoku 
+  [ [Just 3, Just 1, Just 3]
+  , [Just 4, Just 9, Nothing]
+  , [Just 3, Just 1, Just 3]
+  ]
 
 isOkay :: Sudoku -> Bool
 isOkay = undefined
