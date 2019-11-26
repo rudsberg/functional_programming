@@ -17,6 +17,22 @@ data Sudoku = Sudoku [Row]
 rows :: Sudoku -> [Row]
 rows (Sudoku ms) = ms
 
+-- Test data
+example :: Sudoku
+example =
+  Sudoku
+    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
+     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
+     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
+     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
+     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
+     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
+     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
+     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
+     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
+  where
+    n = Nothing
+    j = Just
 
 -- * A1
 
@@ -51,7 +67,7 @@ isFilled (Sudoku sud) = all (\r -> (all (/= Nothing) r)) sud
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku (Sudoku sud) = mapM_ putStrLn $ [rowAsString r | r <- sud]
+printSudoku (Sudoku rs) = mapM_ putStrLn $ [rowAsString r | r <- rs]
 
 rowAsString :: Row -> String
 rowAsString row = map (\x -> if (x == Nothing) then '.' else intToDigit $ fromJust x) row
@@ -63,25 +79,24 @@ rowAsString row = map (\x -> if (x == Nothing) then '.' else intToDigit $ fromJu
 --readSudoku :: FilePath -> IO ()
 readSudoku :: FilePath -> IO Sudoku
 readSudoku fPath = do str <- readFile fPath
-                      let sud = Sudoku $ map convertStringToRow (lines str)
+                      let sud = Sudoku $ map stringToRow (lines str)
                       if (isSudoku sud) then return sud else error "Not a valid sudoko"
 
-convertStringToRow :: String -> Row
-convertStringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)) str
+stringToRow :: String -> Row
+stringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)) str
 
 -- * C1
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen Cell
-cell = frequency [(1, elements [Just n | n <- [1..9]]), (2, elements [Nothing])]
+cell = frequency [(1, elements [Just n | n <- [1..9]]), (3, elements [Nothing])]
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
 
 instance Arbitrary Sudoku where
-  arbitrary = Sudoku <$> (vectorOf 9 (vectorOf 9 cell)) -- HOW DOES THIS WORK WITH FMAP?!
-
+  arbitrary = Sudoku <$> (vectorOf 9 $ vectorOf 9 cell)
 
  -- hint: get to know the QuickCheck function vectorOf
  
@@ -103,12 +118,13 @@ isOkayBlock b = length numList == length (nub numList)
 -- * D2
 
 blocks :: Sudoku -> [Block]
-blocks (Sudoku rows) = rowBlocks ++ columnBlocks ++ squareBlocks
-  where rowBlocks, columnBlocks, squareBlocks :: [Block]
-        rowBlocks = rows
-        columnBlocks = [map (!!b) rows | b <- [0..8]]
-        squareBlocks = [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
+blocks (Sudoku rows) = rows ++ columnBlocks rows ++ squareBlocks rows
 
+columnBlocks :: [Row] -> [Block]
+columnBlocks rs = [map (!!b) rs | b <- [0..8]]
+
+squareBlocks :: [Row] -> [Block]
+squareBlocks rs = [squareBlock rs (r, c) | r <- [0..2], c <- [0..2]]
 
 squareBlock :: [Row] -> (Int, Int) -> Block
 squareBlock allRows (ri, ci) = [takeCell allRows (r, c) | (r, c) <- cellIndexes]
@@ -124,45 +140,8 @@ prop_blocks_lengths sud = length allBlocks == 27 && all (\b -> length b == 9) al
 -- * D3
 
 isOkay :: Sudoku -> Bool
-isOkay (Sudoku rows) = okRows && okColumns && okBlocks
-  where okRows, okColumns, okBlocks :: Bool
-        okRows = all isOkayBlock rows   
-        okColumns = all isOkayBlock $ [map (!!b) rows | b <- [0..8]]
-        okBlocks = all isOkayBlock [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
-
-        
-
--- Test data
-example :: Sudoku
-example =
-  Sudoku
-    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
-     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
-     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
-     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
-     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
-     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
-     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
-     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
-     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
-  where
-    n = Nothing
-    j = Just
-
-exRow :: Row
-exRow = [Just 1, Just 3, Nothing, Just 8]
-filled :: Sudoku
-filled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Just 3]
-  , [Just 3, Just 1, Just 3]
-  ]
-notFilled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Nothing]
-  , [Just 3, Just 1, Just 3]
-  ]
-
+isOkay sud = all isOkayBlock $ blocks sud
+      
 
 ---- Part A ends here --------------------------------------------------------
 ------------------------------------------------------------------------------
