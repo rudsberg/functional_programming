@@ -17,23 +17,6 @@ data Sudoku = Sudoku [Row]
 rows :: Sudoku -> [Row]
 rows (Sudoku ms) = ms
 
--- Test data
-example :: Sudoku
-example =
-  Sudoku
-    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
-     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
-     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
-     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
-     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
-     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
-     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
-     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
-     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
-  where
-    n = Nothing
-    j = Just
-
 -- * A1
 
 -- | allBlankSudoku is a sudoku with just blanks
@@ -147,6 +130,25 @@ isOkay sud = all isOkayBlock $ blocks sud
 ------------------------------------------------------------------------------
 ---- Part B starts here ------------------------------------------------------
 
+-- Test data
+example :: Sudoku
+example =
+  Sudoku
+    [[j 3,j 6,n  ,n  ,j 7,j 1,j 2,n  ,n  ],
+     [n  ,j 5,n  ,n  ,n  ,n  ,j 1,j 8,n  ],
+     [n  ,n  ,j 9,j 2,n  ,j 4,j 7,n  ,n  ],
+     [n  ,n  ,n  ,n  ,j 1,j 3,n  ,j 2,j 8],
+     [j 4,n  ,n  ,j 5,n  ,j 2,n  ,n  ,j 9],
+     [j 2,j 7,n  ,j 4,j 6,n  ,n  ,n  ,n  ],
+     [n  ,n  ,j 5,j 3,n  ,j 8,j 9,n  ,n  ],
+     [n  ,j 8,j 3,n  ,n  ,n  ,n  ,j 6,n  ],
+     [n  ,n  ,j 7,j 6,j 9,n  ,n  ,j 4,j 3]]
+  where
+    n = Nothing
+    j = Just
+exRow = (rows example)!!0
+exCell :: Cell
+exCell = Just 9
 
 -- | Positions are pairs (row,column),
 -- (0,0) is top left corner, (8,8) is bottom left corner
@@ -157,31 +159,42 @@ type Pos = (Int,Int)
 blanks :: Sudoku -> [Pos]
 blanks (Sudoku rs) = [(r, c) | r <- [0..8], c <- [0..8], takeCell rs (r, c) == Nothing]
 
---prop_blanks_allBlanks :: ...
---prop_blanks_allBlanks =
-
+prop_blanks_allBlanks :: Sudoku -> Bool
+prop_blanks_allBlanks sud = all (\(r, c) -> takeCell rs (r, c) == Nothing) $ blanks sud
+    where rs = rows sud
 
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = undefined
+xs !!= (i,y) = as ++ [y] ++ bs 
+    where (as, _: bs) = splitAt i xs 
 
---prop_bangBangEquals_correct :: ...
---prop_bangBangEquals_correct =
+prop_bangBangEquals_correct :: [Integer] -> (Int, Int) -> [Integer]
+prop_bangBangEquals_correct xs (x, y) = undefined
 
 
 -- * E3
 
 update :: Sudoku -> Pos -> Cell -> Sudoku
-update = undefined
+update (Sudoku rs) (r, c) newC = Sudoku $ rs !!= (r, updatedRow)
+    where updatedRow = (rs!!r) !!= (c, newC)
 
---prop_update_updated :: ...
---prop_update_updated =
-
+prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
+prop_update_updated sud (r, c) newC = takeCell updated pos == newC
+    where updated = rows $ update sud pos newC
+          pos     = (if (abs r > 8) then 8 else abs r, if (abs r > 8) then 8 else abs r) -- HUR RESTRIKTERAR SÄTTER MAN EN RANGE PÅ QUICKCHECK VÄRDEN? (0..8, 0..8) 
 
 ------------------------------------------------------------------------------
 
 -- * F1
+solve :: Sudoku -> Maybe Sudoku
+solve (Sudoku rs) = undefined
+
+solve' :: Sudoku -> blankCells -> [Sudoku]
+solve' sud bs
+  | not(isSudoku sud) || not(isOkay sud) = []
+  | isFilled sud = [sud]
+  | otherwise = concat [solve' (update sud (head $ blanks sud) (Just 1)) (drop 1 $ blanks sud) | num <- [Just 0, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8, Just 9]]   
 
 
 -- * F2
