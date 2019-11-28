@@ -2,6 +2,7 @@ module Sudoku where
   import Test.QuickCheck
   import Data.Maybe
   import Data.Char
+  import Data.List
 
   ------------------------------------------------------------------------------
   -- | Representation of sudoku puzzles (allows some junk)
@@ -45,7 +46,6 @@ module Sudoku where
         where
           n = Nothing
           j = Just
-  
   {-
   type Cell   = Maybe Int
   type Row    = [Cell]
@@ -101,7 +101,7 @@ module Sudoku where
   -- | printSudoku sud prints a nice representation of the sudoku sud on
   -- the screen
   printSudoku :: Sudoku -> IO ()
-  printSudoku (Sudoku rs) = putStr $ printRow $ rows (Sudoku rs)
+  printSudoku (Sudoku rs) = putStr $ printRow $ rs
 
   -- | Creates a String representation of each row in the sudoku
   printRow :: [Row] -> String
@@ -133,38 +133,71 @@ module Sudoku where
   -- * C2
   -- | an instance for generating Arbitrary Sudokus
   instance Arbitrary Sudoku where
-    arbitrary = Sudoku (vectorOf 9 (vectorOf 9 cell))
+    arbitrary = Sudoku <$> (vectorOf 9 $ vectorOf 9 cell)
   
-
-
-
    -- hint: get to know the QuickCheck function vectorOf
   -- * C3
   prop_Sudoku :: Sudoku -> Bool
-  prop_Sudoku = undefined
+  prop_Sudoku sud = isSudoku sud
+
     -- hint: this definition is simple!
   ------------------------------------------------------------------------------
   type Block = [Cell] -- a Row is also a Cell
   -- * D1
+  -- | Check if there is any digits that appears more than once
   isOkayBlock :: Block -> Bool
-  isOkayBlock = undefined
+  isOkayBlock block = length (nub blockDigits) == length blockDigits
+      where blockDigits = filter (/= Nothing) block
+
   -- * D2
   blocks :: Sudoku -> [Block]
-  blocks = undefined
+  blocks (Sudoku rows) = rows ++ cols rows ++ squareBlocks rows        
+
+  -- | Creates a block with columns from a list of rows 
+  cols :: [Row] -> [Block]
+  cols rows = [map (!! i) rows | i <- [0..8]]
+
+  squareBlocks :: [Row] -> [Block]
+  squareBlocks rows = [squareBlock (c*3,0) rows | c <- [0..2]] ++ 
+                      [squareBlock (c*3,3) rows | c <- [0..2]] ++ 
+                      [squareBlock (c*3,6) rows | c <- [0..2]]
+
+
+  -- | Creates a 3x3 block as a list of cells from a list of rows and given indices
+  squareBlock :: (Int,Int) -> [Row] -> [Cell]
+  squareBlock (colInd,rowInd) rows = concat [map (!! i) columns | i <- [rowInd..rowInd+2]] 
+            where columns  = [map (!! i) rows | i <- [colInd..colInd+2]]
+
+  -- | Test that given sudoku contains  
   prop_blocks_lengths :: Sudoku -> Bool
-  prop_blocks_lengths = undefined
+  prop_blocks_lengths (Sudoku sud) = and (map (\x -> length x == 9) bs) && length bs == 27
+    where bs = blocks (Sudoku sud)
+
   -- * D3
   isOkay :: Sudoku -> Bool
-  isOkay = undefined
+  isOkay (Sudoku s) = all (isOkayBlock) $ blocks (Sudoku s) 
+
+
   ---- Part A ends here --------------------------------------------------------
   ------------------------------------------------------------------------------
+
+
   ---- Part B starts here ------------------------------------------------------
+{-head :: [a] -> a
+(!!) :: [a] -> Int -> a
+zip  :: [a] -> [b] -> [(a,b)]
+-}
+
   -- | Positions are pairs (row,column),
   -- (0,0) is top left corner, (8,8) is bottom left corner
   type Pos = (Int,Int)
-  -- * E1
+
+  -- * E1 Given a Sudoku returns a list of the positions in the Sudoku that are still blank.
   blanks :: Sudoku -> [Pos]
-  blanks = undefined
+  blanks (Sudoku sud) = undefined
+
+
+
   --prop_blanks_allBlanks :: ...
   --prop_blanks_allBlanks =
   -- * E2
