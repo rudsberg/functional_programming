@@ -187,6 +187,7 @@ prop_update_updated sud (r, c) newC = takeCell updated pos == newC
 ------------------------------------------------------------------------------
 
 -- * F1
+
 solve :: Sudoku -> Maybe Sudoku
 solve sud = if (length s == 0) then Nothing else Just $ head s
   where s = solve' sud (blanks sud)
@@ -200,6 +201,15 @@ solve' sud bs
 
 -- * F2
 
+readAndSolve :: FilePath -> IO ()
+readAndSolve fp = do sud <- readSudoku fp
+                     let solved = solve sud
+                     if (solved == Nothing) then putStrLn "(no solutions)" else printSudoku (fromJust solved)
+  
+
+--  readSudoku fPath = do str <- readFile fPath
+ -- let sud = Sudoku $ map stringToRow (lines str)
+--  if (isSudoku sud) then return sud else error "Not a valid sudoko"
 
 -- * F3
 
