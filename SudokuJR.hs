@@ -188,13 +188,14 @@ prop_update_updated sud (r, c) newC = takeCell updated pos == newC
 
 -- * F1
 solve :: Sudoku -> Maybe Sudoku
-solve (Sudoku rs) = undefined
+solve sud = if (length s == 0) then Nothing else Just $ head s
+  where s = solve' sud (blanks sud)
 
 solve' :: Sudoku -> blankCells -> [Sudoku]
 solve' sud bs
   | not(isSudoku sud) || not(isOkay sud) = []
   | isFilled sud = [sud]
-  | otherwise = concat [solve' (update sud (head $ blanks sud) (Just 1)) (drop 1 $ blanks sud) | num <- [Just 0, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8, Just 9]]   
+  | otherwise = concat [solve' (update sud (head $ blanks sud) num) (drop 1 $ blanks sud) | num <- [Just 0, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8, Just 9]]   
 
 
 -- * F2
