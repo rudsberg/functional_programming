@@ -208,5 +208,10 @@ readAndSolve fp = do sud <- readSudoku fp
 
 -- * F3
 
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf sud1 sud2 = firstIsSolution && firstIsSolutionOfSecond
+    where firstIsSolution = isOkay sud1 && isFilled sud1
+          firstIsSolutionOfSecond = True
+
 
 -- * F4
