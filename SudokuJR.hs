@@ -72,7 +72,7 @@ stringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen Cell
-cell = frequency [(1, elements [Just n | n <- [1..9]]), (3, elements [Nothing])]
+cell = frequency [(1, elements [Just n | n <- [1..9]]), (2, elements [Nothing])]
 
 -- * C2
 
@@ -146,9 +146,6 @@ example =
   where
     n = Nothing
     j = Just
-exRow = (rows example)!!0
-exCell :: Cell
-exCell = Just 9
 
 -- | Positions are pairs (row,column),
 -- (0,0) is top left corner, (8,8) is bottom left corner
@@ -200,13 +197,14 @@ prop_update_updated sud (r, c) newC = takeCell updated pos == newC
 
 solve :: Sudoku -> Maybe Sudoku
 solve sud = if (length s == 0) then Nothing else Just $ head s
-  where s = take 1 $ solve' sud (blanks sud) --takeWhile (\sol -> not(isOkay sol) || not(isFilled sol) || not(isSudoku sol)) $ solve' sud (blanks sud)
+  where s = take 1 $ solve' sud (blanks sud)
 
 solve' :: Sudoku -> blankCells -> [Sudoku]
 solve' sud bs
   | not(isSudoku sud) || not(isOkay sud) = []
   | isFilled sud = [sud]
-  | otherwise = filter (\s -> isOkay s && isSudoku s && isFilled s) $ concat [solve' (update sud (head $ blanks sud) $ Just num) (drop 1 $ blanks sud) | num <- [0..9]]   
+  | otherwise = filter (\s -> isOkay s && isSudoku s && isFilled s) 
+                $ concat [solve' (update sud (head $ blanks sud) $ Just num) (drop 1 $ blanks sud) | num <- [0..9]]   
 
 -- * F2
 
@@ -220,9 +218,9 @@ readAndSolve fp = do sud <- readSudoku fp
 isSolutionOf :: Sudoku -> Sudoku -> Bool
 isSolutionOf sud1 sud2 = isOkay sud1 && isFilled sud1 
                          && and [c1 == c2 | (c1, c2) <- zip (concat $ rows sud1) (concat $ rows sud2), c2 /= Nothing]               
-                         -- where allCells sud = concat $ rows sud
+
 -- * F4
 prop_SolveSound :: Sudoku -> Bool
 prop_SolveSound sud 
-  | not(isOkay sud) || not(isSudoku sud) || isFilled sud = solve sud == Nothing
-  | otherwise = and [sul `isSolutionOf` sud | sul <- solve' sud (blanks sud)] --all (\sul -> sul `isSolutionOf` sud) $ solve' sud (blanks sud)
+  | not(isOkay sud) || not(isSudoku sud) = solve sud == Nothing
+  | otherwise = and [sul `isSolutionOf` sud | sul <- solve' sud (blanks sud)]
