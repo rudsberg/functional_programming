@@ -8,7 +8,7 @@ module Sudoku where
   -- | Representation of sudoku puzzles (allows some junk)
   type Cell = Maybe Int -- a single cell
   type Row  = [Cell]    -- a row is a list of cells
-  data Sudoku = Sudoku [Row] 
+  data Sudoku = Sudoku [Row]  -- [[[Maybe Int]]]
    deriving ( Show, Eq )
   rows :: Sudoku -> [Row]
   rows (Sudoku ms) = ms
@@ -157,6 +157,10 @@ module Sudoku where
   cols :: [Row] -> [Block]
   cols rows = [map (!! i) rows | i <- [0..8]]
 
+  -- | Given a list of rows and a position, return cell value of that position
+  takeCell :: [Row] -> (Int, Int) -> Cell
+  takeCell rs (r, c) = (rs!!r)!!c
+
   squareBlocks :: [Row] -> [Block]
   squareBlocks rows = [squareBlock (c*3,0) rows | c <- [0..2]] ++ 
                       [squareBlock (c*3,3) rows | c <- [0..2]] ++ 
@@ -200,30 +204,62 @@ module Sudoku where
             iList = replicate (length blank) i  
 
 
-
+  -- | Check that all elements in the list of blanks actually is blank
+  --   by filtering out all 'Nothing' elements and see if something is left
   prop_blanks_allBlanks :: Sudoku -> Bool
-  prop_blanks_allBlanks = undefined
+  prop_blanks_allBlanks sud = length (filter (\(r,c) -> takeCell rs (r,c) /= Nothing) $ blanks sud) == 0
+      where rs = rows sud
 
   -- * E2
   -- | Given a list and a tuple containing an index in the list and a new value, updates the given list with the new value at 
   (!!=) :: [a] -> (Int,a) -> [a]
-  (!!=) xs (i,y) = head ++ [y] ++ tail
-       where (head, _:tail) = splitAt i xs 
+  (!!=) list (i,y) | length list < 0  = error "Can not change value in an empty list"
+                   | length list == 0 = []
+                   | i >= length list = error "Index bigger than list" 
+                   | otherwise        = head ++ [y] ++ tail
+       where (head, _:tail) = splitAt i list 
 
 
-  --prop_bangBangEquals_correct :: 
-  --prop_bangBangEquals_correct =
+  prop_bangBangEquals_correct :: [Maybe Int] -> (Int,(Maybe Int)) -> Bool
+  prop_bangBangEquals_correct list (i,v) | length list == 0  = (list !!= (0,v)) == []
+                                         | list !! i' == v   = list == list !!= (i',v) 
+                                         | otherwise         = list /= list !!= (i',v) 
+      where i' = if abs i >= length list then mod i $ length list else abs i
 
   -- * E3
   update :: Sudoku -> Pos -> Cell -> Sudoku
-  update = undefined
-  --prop_update_updated :: ...
-  --prop_update_updated =
+  update (Sudoku sud) (r,c) val = Sudoku (head ++ [upDatedRow] ++ tail)
+      where upDatedRow = (sud !! r) !!= (c,val)  
+            (head, _:tail) = splitAt r sud  
+  
+  prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
+  prop_update_updated s (i,j) c | c == takeCell (rows s) p' = s == update s p' c 
+                                | otherwise                 = s /= update s p' c
+              where p' = if abs i > 8 || abs j > 8 then (mod i 8, mod j 8) else (abs i, abs j)
   ------------------------------------------------------------------------------
   -- * F1
+  solve :: Sudoku -> Maybe Sudoku
+  solve sudoku = head $ solve' sudoku $ blanks sudoku
+
+
+  solve' :: Sudoku -> [Pos] -> [Maybe Sudoku]
+  solve' sudoku blank | not $ isSudoku sudoku                            = [Nothing]
+                      | length blank == 0                                = []
+                      | isFilled sudoku                                  = [Just sudoku] 
+                      | otherwise                                        = [listToMaybe $ filter (\x -> isOkay x && isFilled x) $ catMaybes solution]
+        where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
+
+
+  {-
+  solve' :: Sudoku -> [Pos] -> [Maybe Sudoku]
+  solve' sudoku blank | not (isSudoku sudoku || isOkay sudoku) = [Nothing]
+                      | length blank == 0                      = [Just sudoku]
+                      | isFilled sudoku && isOkay sudoku       = [Just sudoku] 
+                      | otherwise                              = [listToMaybe (filter (\x -> isOkay x) (catMaybes solutions))]
+              where solutions = concat [solve' (update sudoku (blank !! i) (Just c)) (drop 1 $ blank) | c <- [1..9], i <- [0..end]]
+                    end = length blank -1 
+  -}                          
+
   -- * F2
   -- * F3
   -- * F4
-  
-  
-  

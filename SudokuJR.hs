@@ -120,7 +120,7 @@ prop_blocks_lengths :: Sudoku -> Bool
 prop_blocks_lengths sud = length allBlocks == 27 && all (\b -> length b == 9) allBlocks
   where allBlocks = blocks sud
 
--- * D3
+-- * D3 
 
 isOkay :: Sudoku -> Bool
 isOkay sud = all isOkayBlock $ blocks sud
