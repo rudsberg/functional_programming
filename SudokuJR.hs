@@ -166,12 +166,22 @@ prop_blanks_allBlanks sud = all (\(r, c) -> takeCell rs (r, c) == Nothing) $ bla
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = as ++ [y] ++ bs 
+(!!=) xs (i,y)
+  | i < 0           = error "Index to insert can not be negative"
+  | length xs == 0  = []
+  | length xs <= i  = error "Index to insert is larger than list"
+  | otherwise       = as ++ [y] ++ bs 
     where (as, _: bs) = splitAt i xs 
 
-prop_bangBangEquals_correct :: [Integer] -> (Int, Int) -> [Integer]
-prop_bangBangEquals_correct xs (x, y) = undefined
-
+prop_bangBangEquals_correct :: [Maybe Int] -> (Int, Maybe Int) -> Bool
+prop_bangBangEquals_correct xs (i, x) 
+  | length xs == 0 = inserted == []
+  | x == deleted   = inserted == xs && sameSize
+  | otherwise      = inserted !!= (index, deleted) == xs && sameSize
+    where index    = if (length xs == 0) then 0 else i `mod` length xs 
+          deleted  = xs !! index
+          inserted = xs !!= (index, x)
+          sameSize = length inserted == length xs
 
 -- * E3
 
@@ -182,7 +192,7 @@ update (Sudoku rs) (r, c) newC = Sudoku $ rs !!= (r, updatedRow)
 prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
 prop_update_updated sud (r, c) newC = takeCell updated pos == newC
     where updated = rows $ update sud pos newC
-          pos     = (if (abs r > 8) then 8 else abs r, if (abs r > 8) then 8 else abs r) -- HUR RESTRIKTERAR SÄTTER MAN EN RANGE PÅ QUICKCHECK VÄRDEN? (0..8, 0..8) 
+          pos     = (if (abs r > 8) then abs r `mod` 8 else abs r, if (abs c > 8) then abs c `mod` 8 else abs c) 
 
 ------------------------------------------------------------------------------
 
@@ -190,14 +200,13 @@ prop_update_updated sud (r, c) newC = takeCell updated pos == newC
 
 solve :: Sudoku -> Maybe Sudoku
 solve sud = if (length s == 0) then Nothing else Just $ head s
-  where s = take 1 $ solve' sud (blanks sud)
+  where s = take 1 $ solve' sud (blanks sud) --takeWhile (\sol -> not(isOkay sol) || not(isFilled sol) || not(isSudoku sol)) $ solve' sud (blanks sud)
 
 solve' :: Sudoku -> blankCells -> [Sudoku]
 solve' sud bs
   | not(isSudoku sud) || not(isOkay sud) = []
   | isFilled sud = [sud]
-  | otherwise = concat [solve' (update sud (head $ blanks sud) num) (drop 1 $ blanks sud) | num <- [Just 0, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8, Just 9]]   
-
+  | otherwise = filter (\s -> isOkay s && isSudoku s && isFilled s) $ concat [solve' (update sud (head $ blanks sud) $ Just num) (drop 1 $ blanks sud) | num <- [0..9]]   
 
 -- * F2
 
@@ -209,9 +218,11 @@ readAndSolve fp = do sud <- readSudoku fp
 -- * F3
 
 isSolutionOf :: Sudoku -> Sudoku -> Bool
-isSolutionOf sud1 sud2 = firstIsSolution && firstIsSolutionOfSecond
-    where firstIsSolution = isOkay sud1 && isFilled sud1
-          firstIsSolutionOfSecond = True
-
-
+isSolutionOf sud1 sud2 = isOkay sud1 && isFilled sud1 
+                         && and [c1 == c2 | (c1, c2) <- zip (concat $ rows sud1) (concat $ rows sud2), c2 /= Nothing]               
+                         -- where allCells sud = concat $ rows sud
 -- * F4
+prop_SolveSound :: Sudoku -> Bool
+prop_SolveSound sud 
+  | not(isOkay sud) || not(isSudoku sud) || isFilled sud = solve sud == Nothing
+  | otherwise = and [sul `isSolutionOf` sud | sul <- solve' sud (blanks sud)] --all (\sul -> sul `isSolutionOf` sud) $ solve' sud (blanks sud)
