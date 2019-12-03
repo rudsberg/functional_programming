@@ -17,7 +17,6 @@ data Sudoku = Sudoku [Row]
 rows :: Sudoku -> [Row]
 rows (Sudoku ms) = ms
 
-
 -- * A1
 
 -- | allBlankSudoku is a sudoku with just blanks
@@ -51,7 +50,7 @@ isFilled (Sudoku sud) = all (\r -> (all (/= Nothing) r)) sud
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku (Sudoku sud) = mapM_ putStrLn $ [rowAsString r | r <- sud]
+printSudoku (Sudoku rs) = mapM_ putStrLn $ [rowAsString r | r <- rs]
 
 rowAsString :: Row -> String
 rowAsString row = map (\x -> if (x == Nothing) then '.' else intToDigit $ fromJust x) row
@@ -63,25 +62,24 @@ rowAsString row = map (\x -> if (x == Nothing) then '.' else intToDigit $ fromJu
 --readSudoku :: FilePath -> IO ()
 readSudoku :: FilePath -> IO Sudoku
 readSudoku fPath = do str <- readFile fPath
-                      let sud = Sudoku $ map convertStringToRow (lines str)
+                      let sud = Sudoku $ map stringToRow (lines str)
                       if (isSudoku sud) then return sud else error "Not a valid sudoko"
 
-convertStringToRow :: String -> Row
-convertStringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)) str
+stringToRow :: String -> Row
+stringToRow str = map (\x -> if (x == '.') then Nothing else Just (digitToInt x)) str
 
 -- * C1
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen Cell
-cell = frequency [(1, elements [Just n | n <- [1..9]]), (2, elements [Nothing])]
+cell = frequency [(1, elements [Just n | n <- [1..9]]), (3, elements [Nothing])]
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
 
 instance Arbitrary Sudoku where
-  arbitrary = Sudoku <$> (vectorOf 9 (vectorOf 9 cell)) -- HOW DOES THIS WORK WITH FMAP?!
-
+  arbitrary = Sudoku <$> (vectorOf 9 $ vectorOf 9 cell)
 
  -- hint: get to know the QuickCheck function vectorOf
  
@@ -95,9 +93,6 @@ prop_Sudoku sud = isSudoku sud
 type Block = [Cell] -- a Row is also a Cell
 
 -- * D1
-b1, b2 :: Block
-b1 = [Just 1, Just 7, Nothing, Nothing, Just 3, Nothing, Nothing, Nothing, Just 2]
-b2 = [Just 1, Just 7, Nothing, Just 7, Just 3, Nothing, Nothing, Nothing, Just 2]
 
 isOkayBlock :: Block -> Bool
 isOkayBlock b = length numList == length (nub numList)
@@ -106,11 +101,13 @@ isOkayBlock b = length numList == length (nub numList)
 -- * D2
 
 blocks :: Sudoku -> [Block]
-blocks (Sudoku rows) = rowBlocks ++ columnBlocks ++ squareBlocks
-  where rowBlocks, columnBlocks, squareBlocks :: [Block]
-        rowBlocks = rows
-        columnBlocks = [map (!!b) rows | b <- [0..8]]
-        squareBlocks = [squareBlock rows (r, c) | r <- [0..2], c <- [0..2]]
+blocks (Sudoku rows) = rows ++ columnBlocks rows ++ squareBlocks rows
+
+columnBlocks :: [Row] -> [Block]
+columnBlocks rs = [map (!!b) rs | b <- [0..8]]
+
+squareBlocks :: [Row] -> [Block]
+squareBlocks rs = [squareBlock rs (r, c) | r <- [0..2], c <- [0..2]]
 
 squareBlock :: [Row] -> (Int, Int) -> Block
 squareBlock allRows (ri, ci) = [takeCell allRows (r, c) | (r, c) <- cellIndexes]
@@ -120,9 +117,18 @@ takeCell :: [Row] -> (Int, Int) -> Cell
 takeCell rs (r, c) = (rs!!r)!!c
 
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths = undefined
+prop_blocks_lengths sud = length allBlocks == 27 && all (\b -> length b == 9) allBlocks
+  where allBlocks = blocks sud
 
 -- * D3
+
+isOkay :: Sudoku -> Bool
+isOkay sud = all isOkayBlock $ blocks sud
+      
+
+---- Part A ends here --------------------------------------------------------
+------------------------------------------------------------------------------
+---- Part B starts here ------------------------------------------------------
 
 -- Test data
 example :: Sudoku
@@ -140,29 +146,9 @@ example =
   where
     n = Nothing
     j = Just
-
-exRow :: Row
-exRow = [Just 1, Just 3, Nothing, Just 8]
-filled :: Sudoku
-filled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Just 3]
-  , [Just 3, Just 1, Just 3]
-  ]
-notFilled = Sudoku 
-  [ [Just 3, Just 1, Just 3]
-  , [Just 4, Just 9, Nothing]
-  , [Just 3, Just 1, Just 3]
-  ]
-
-isOkay :: Sudoku -> Bool
-isOkay = undefined
-
-
----- Part A ends here --------------------------------------------------------
-------------------------------------------------------------------------------
----- Part B starts here ------------------------------------------------------
-
+exRow = (rows example)!!0
+exCell :: Cell
+exCell = Just 9
 
 -- | Positions are pairs (row,column),
 -- (0,0) is top left corner, (8,8) is bottom left corner
@@ -171,39 +157,61 @@ type Pos = (Int,Int)
 -- * E1
 
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks (Sudoku rs) = [(r, c) | r <- [0..8], c <- [0..8], takeCell rs (r, c) == Nothing]
 
---prop_blanks_allBlanks :: ...
---prop_blanks_allBlanks =
-
+prop_blanks_allBlanks :: Sudoku -> Bool
+prop_blanks_allBlanks sud = all (\(r, c) -> takeCell rs (r, c) == Nothing) $ blanks sud
+    where rs = rows sud
 
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = undefined
+xs !!= (i,y) = as ++ [y] ++ bs 
+    where (as, _: bs) = splitAt i xs 
 
---prop_bangBangEquals_correct :: ...
---prop_bangBangEquals_correct =
+prop_bangBangEquals_correct :: [Integer] -> (Int, Int) -> [Integer]
+prop_bangBangEquals_correct xs (x, y) = undefined
 
 
 -- * E3
 
 update :: Sudoku -> Pos -> Cell -> Sudoku
-update = undefined
+update (Sudoku rs) (r, c) newC = Sudoku $ rs !!= (r, updatedRow)
+    where updatedRow = (rs!!r) !!= (c, newC)
 
---prop_update_updated :: ...
---prop_update_updated =
-
+prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
+prop_update_updated sud (r, c) newC = takeCell updated pos == newC
+    where updated = rows $ update sud pos newC
+          pos     = (if (abs r > 8) then 8 else abs r, if (abs r > 8) then 8 else abs r) -- HUR RESTRIKTERAR SÄTTER MAN EN RANGE PÅ QUICKCHECK VÄRDEN? (0..8, 0..8) 
 
 ------------------------------------------------------------------------------
 
 -- * F1
 
+solve :: Sudoku -> Maybe Sudoku
+solve sud = if (length s == 0) then Nothing else Just $ head s
+  where s = take 1 $ solve' sud (blanks sud)
+
+solve' :: Sudoku -> blankCells -> [Sudoku]
+solve' sud bs
+  | not(isSudoku sud) || not(isOkay sud) = []
+  | isFilled sud = [sud]
+  | otherwise = concat [solve' (update sud (head $ blanks sud) num) (drop 1 $ blanks sud) | num <- [Just 0, Just 1, Just 2, Just 3, Just 4, Just 5, Just 6, Just 7, Just 8, Just 9]]   
+
 
 -- * F2
 
+readAndSolve :: FilePath -> IO ()
+readAndSolve fp = do sud <- readSudoku fp
+                     let solved = solve sud
+                     if (solved == Nothing) then putStrLn "(no solutions)" else printSudoku (fromJust solved)
 
 -- * F3
+
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf sud1 sud2 = firstIsSolution && firstIsSolutionOfSecond
+    where firstIsSolution = isOkay sud1 && isFilled sud1
+          firstIsSolutionOfSecond = True
 
 
 -- * F4
