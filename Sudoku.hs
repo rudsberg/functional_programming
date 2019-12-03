@@ -183,10 +183,6 @@ module Sudoku where
 
 
   ---- Part B starts here ------------------------------------------------------
-{-head :: [a] -> a
-(!!) :: [a] -> Int -> a
-zip  :: [a] -> [b] -> [(a,b)]
--}
 
   -- | Positions are pairs (row,column),
   -- (0,0) is top left corner, (8,8) is bottom left corner
@@ -194,17 +190,30 @@ zip  :: [a] -> [b] -> [(a,b)]
 
   -- * E1 Given a Sudoku returns a list of the positions in the Sudoku that are still blank.
   blanks :: Sudoku -> [Pos]
-  blanks (Sudoku sud) = undefined
+  blanks (Sudoku sud) =  blankRow sud 0
+
+  
+  blankRow :: [Row] -> Int -> [Pos]
+  blankRow [] _     = []
+  blankRow (r:rs) i = zip iList blank ++ blankRow rs (i + 1)
+      where blank = findIndices (== Nothing) r 
+            iList = replicate (length blank) i  
 
 
 
-  --prop_blanks_allBlanks :: ...
-  --prop_blanks_allBlanks =
+  prop_blanks_allBlanks :: Sudoku -> Bool
+  prop_blanks_allBlanks = undefined
+
   -- * E2
+  -- | Given a list and a tuple containing an index in the list and a new value, updates the given list with the new value at 
   (!!=) :: [a] -> (Int,a) -> [a]
-  xs !!= (i,y) = undefined
-  --prop_bangBangEquals_correct :: ...
+  (!!=) xs (i,y) = head ++ [y] ++ tail
+       where (head, _:tail) = splitAt i xs 
+
+
+  --prop_bangBangEquals_correct :: 
   --prop_bangBangEquals_correct =
+
   -- * E3
   update :: Sudoku -> Pos -> Cell -> Sudoku
   update = undefined
