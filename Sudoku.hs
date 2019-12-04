@@ -46,12 +46,23 @@ module Sudoku where
         where
           n = Nothing
           j = Just
-  {-
-  type Cell   = Maybe Int
-  type Row    = [Cell]
-  data Sudoku = Sudoku [Row]
-  -}
-  
+ 
+-- | Harder example with more empty spaces
+  example3 :: Sudoku
+  example3 = Sudoku
+                [ [n  ,j 6,n  ,n  ,n  ,j 1,n  ,n  ,n  ]
+                , [n  ,j 5,n  ,n  ,n  ,n  ,j 1,n  ,n  ]
+                , [n  ,n  ,j 9,j 2,n  ,j 4,n  ,n  ,n  ]
+                , [n  ,n  ,n  ,n  ,j 1,n  ,n  ,j 2,j 8]
+                , [j 4,n  ,n  ,n ,n  ,j 2,n  ,n  ,j 9]
+                , [j 2,j 7,n  ,n  ,j 6,n  ,n  ,n  ,n  ]
+                , [n  ,n  ,n  ,n  ,n  ,j 8,n  ,n  ,n  ]
+                , [n  ,n  ,n  ,n  ,n  ,n  ,n  ,j 6,n  ]
+                , [n  ,n  ,j 7,n  ,j 9,n  ,n  ,n  ,j 3]
+                ]
+            where
+              n = Nothing
+              j = Just
   -- * A1
   -- | allBlankSudoku is a sudoku with just blanks
   allBlankSudoku :: Sudoku
@@ -128,7 +139,7 @@ module Sudoku where
   -- * C1
   -- | cell generates an arbitrary cell in a Sudoku
   cell :: Gen (Cell)
-  cell = frequency [(3, elements [Just n | n <- [1..9]]),(7,elements [Nothing])]
+  cell = frequency [(4, elements [Just n | n <- [1..9]]),(9,elements [Nothing])]
 
   -- * C2
   -- | an instance for generating Arbitrary Sudokus
@@ -239,27 +250,31 @@ module Sudoku where
   ------------------------------------------------------------------------------
   -- * F1
   solve :: Sudoku -> Maybe Sudoku
-  solve sudoku = head $ solve' sudoku $ blanks sudoku
+  solve sudoku = if length solution == 0 then Nothing else Just $ head solution
+    where solution = take 1 $ solve' sudoku $ blanks sudoku
 
 
-  solve' :: Sudoku -> [Pos] -> [Maybe Sudoku]
-  solve' sudoku blank | not $ isSudoku sudoku                            = [Nothing]
-                      | length blank == 0                                = []
-                      | isFilled sudoku                                  = [Just sudoku] 
-                      | otherwise                                        = [listToMaybe $ filter (\x -> isOkay x && isFilled x) $ catMaybes solution]
-        where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
+  solve' :: Sudoku -> [Pos] -> [Sudoku]
+  solve' sudoku blank | (not $ isSudoku sudoku) || (not $ isOkay sudoku) = []
+                      | isFilled sudoku && isOkay sudoku                 = [sudoku] 
+                      | otherwise                                        = filter (\x -> isOkay x && isFilled x) solution
+       where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
+                      
+  -- * F2 reads a sudoku from a file, solves it and prints the solution if found
+  readAndSolve :: FilePath -> IO ()
+  readAndSolve file = do
+                      sud <- readSudoku file 
+                      let solved = solve sud
+                      if solved == Nothing then putStr "No solution found\n" else printSudoku (fromJust $ solve sud)
+                  
+  -- * F3 checks wheter the first sudoku is a solution to the second sudoku
+  isSolutionOf :: Sudoku -> Sudoku -> Bool
+  isSolutionOf s1 s2 = isSudoku s1 && isOkay s1 && isFilled s1 && containsAll
+      where containsAll = all (\(x1,x2) -> x1 == x2) $ filter(\(c1,c2) -> c2 /= Nothing) $ zip (concat $ rows s1) (concat $ rows s2)
 
-
-  {-
-  solve' :: Sudoku -> [Pos] -> [Maybe Sudoku]
-  solve' sudoku blank | not (isSudoku sudoku || isOkay sudoku) = [Nothing]
-                      | length blank == 0                      = [Just sudoku]
-                      | isFilled sudoku && isOkay sudoku       = [Just sudoku] 
-                      | otherwise                              = [listToMaybe (filter (\x -> isOkay x) (catMaybes solutions))]
-              where solutions = concat [solve' (update sudoku (blank !! i) (Just c)) (drop 1 $ blank) | c <- [1..9], i <- [0..end]]
-                    end = length blank -1 
-  -}                          
-
-  -- * F2
-  -- * F3
-  -- * F4
+  -- * F4 
+  prop_SolveSound :: Sudoku -> Bool
+  prop_SolveSound sudoku =  all (\y -> isSolutionOf y sudoku) (solve' sudoku (blanks sudoku)) -- ==> isSudoku sudoku
+    -- all (\y -> isSolutionOf y sudoku) (filter (\x -> isOkay x && isFilled x && isSudoku x) (solve' sudoku (blanks sudoku))) -- ==> isSudoku sudoku && isOkay sudoku
+  
+  fewerChecks prop = quickCheckWith stdArgs{maxSuccess=40 } prop
