@@ -139,19 +139,17 @@ module Sudoku where
   -- * C1
   -- | cell generates an arbitrary cell in a Sudoku
   cell :: Gen (Cell)
-  cell = frequency [(4, elements [Just n | n <- [1..9]]),(9,elements [Nothing])]
+  cell = frequency [(4, elements [Just n | n <- [1..9]]),(5,elements [Nothing])]
 
   -- * C2
   -- | an instance for generating Arbitrary Sudokus
   instance Arbitrary Sudoku where
     arbitrary = Sudoku <$> (vectorOf 9 $ vectorOf 9 cell)
   
-   -- hint: get to know the QuickCheck function vectorOf
   -- * C3
   prop_Sudoku :: Sudoku -> Bool
   prop_Sudoku sud = isSudoku sud
 
-    -- hint: this definition is simple!
   ------------------------------------------------------------------------------
   type Block = [Cell] -- a Row is also a Cell
   -- * D1
@@ -231,6 +229,7 @@ module Sudoku where
        where (head, _:tail) = splitAt i list 
 
 
+  -- | Checks that !!= operator work as intended
   prop_bangBangEquals_correct :: [Maybe Int] -> (Int,(Maybe Int)) -> Bool
   prop_bangBangEquals_correct list (i,v) | length list == 0  = (list !!= (0,v)) == []
                                          | list !! i' == v   = list == list !!= (i',v) 
@@ -238,17 +237,20 @@ module Sudoku where
       where i' = if abs i >= length list then mod i $ length list else abs i
 
   -- * E3
+  -- | Updates a given sudoku with a given value at a given position
   update :: Sudoku -> Pos -> Cell -> Sudoku
   update (Sudoku sud) (r,c) val = Sudoku (head ++ [upDatedRow] ++ tail)
       where upDatedRow = (sud !! r) !!= (c,val)  
-            (head, _:tail) = splitAt r sud  
-  
+            (head, _:tail) = splitAt r sud 
+
+  -- | Checks that function update work as intended
   prop_update_updated :: Sudoku -> Pos -> Cell -> Bool
   prop_update_updated s (i,j) c | c == takeCell (rows s) p' = s == update s p' c 
                                 | otherwise                 = s /= update s p' c
-              where p' = if abs i > 8 || abs j > 8 then (mod i 8, mod j 8) else (abs i, abs j)
+              where p' = if abs i > 8 || abs j > 8 then (mod i 8, mod j 8) else (abs i, abs j) -- Could maybe have restricted (i,j) with a property test instead
   ------------------------------------------------------------------------------
   -- * F1
+  -- | Produces one solution (if there is one) for a given sudoku
   solve :: Sudoku -> Maybe Sudoku
   solve sudoku = if length solution == 0 then Nothing else Just $ head solution
     where solution = take 1 $ solve' sudoku $ blanks sudoku
@@ -260,21 +262,26 @@ module Sudoku where
                       | otherwise                                        = filter (\x -> isOkay x && isFilled x) solution
        where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
                       
-  -- * F2 reads a sudoku from a file, solves it and prints the solution if found
+  -- * F2 
+  -- | Reads a sudoku from a file, solves it and prints the solution if found
   readAndSolve :: FilePath -> IO ()
   readAndSolve file = do
                       sud <- readSudoku file 
                       let solved = solve sud
                       if solved == Nothing then putStr "No solution found\n" else printSudoku (fromJust $ solve sud)
                   
-  -- * F3 checks wheter the first sudoku is a solution to the second sudoku
+  -- * F3 
+  -- | Checks whether the first sudoku is a solution to the second sudoku
   isSolutionOf :: Sudoku -> Sudoku -> Bool
   isSolutionOf s1 s2 = isSudoku s1 && isOkay s1 && isFilled s1 && containsAll
       where containsAll = all (\(x1,x2) -> x1 == x2) $ filter(\(c1,c2) -> c2 /= Nothing) $ zip (concat $ rows s1) (concat $ rows s2)
 
   -- * F4 
-  prop_SolveSound :: Sudoku -> Bool
-  prop_SolveSound sudoku =  all (\y -> isSolutionOf y sudoku) (solve' sudoku (blanks sudoku)) -- ==> isSudoku sudoku
-    -- all (\y -> isSolutionOf y sudoku) (filter (\x -> isOkay x && isFilled x && isSudoku x) (solve' sudoku (blanks sudoku))) -- ==> isSudoku sudoku && isOkay sudoku
-  
-  fewerChecks prop = quickCheckWith stdArgs{maxSuccess=40 } prop
+  -- | Tests if all solutions to a sudoku is a valid solution
+  prop_SolveSound :: Sudoku -> Property
+  prop_SolveSound sudoku = isSudoku sudoku && isOkay sudoku ==> solveSound (solve sudoku) sudoku
+      where solveSound :: Maybe Sudoku -> Sudoku -> Bool
+            solveSound (Just sudoku) sud = isSolutionOf (fromJust $ Just sudoku) sud
+            solveSound Nothing _ = False
+
+  fewerChecks prop = quickCheckWith stdArgs{maxSuccess=30 } prop
