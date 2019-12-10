@@ -212,6 +212,12 @@ module Sudoku where
       where blank = findIndices (== Nothing) r 
             iList = replicate (length blank) i  
 
+  blankRow' :: Row -> Int -> [Pos]
+  blankRow' [] _     = []
+  blankRow' (c:cs) i = zip iList blank ++ blankRow rs (i + 1)
+      where blank = findIndices (== Nothing) r 
+            iList = replicate (length blank) i  
+          
 
   -- | Check that all elements in the list of blanks actually is blank
   --   by filtering out all 'Nothing' elements and see if something is left
@@ -261,7 +267,24 @@ module Sudoku where
                       | isFilled sudoku && isOkay sudoku                 = [sudoku] 
                       | otherwise                                        = filter (\x -> isOkay x && isFilled x) solution
        where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
-                      
+           
+       
+  -- | extra assignments
+  solve'' :: Sudoku -> [Pos] -> [Sudoku] 
+  solve'' sudoku blank | (not $ isSudoku sudoku) || (not $ isOkay sudoku) = []
+                     | isFilled sudoku && isOkay sudoku                 = [sudoku] 
+                     | otherwise                                        = filter (\x -> isOkay x && isFilled x) solution
+        where solution = concat [solve'' (update sudoku pos (Just c)) (drop 1 blank) | c <- [1..9]]
+              pos      = take 1 $ getMax $ map noOfBlanks (rows sudoku)
+
+  noOfBlanks :: Row -> Int 
+  noOfBlanks []     = []
+  noOfBlanks (r:rs) = (length $ blankRow' r):noOfBlanks rs
+
+  getMax :: [Int] -> [Int]
+  getMax []     = []
+  getMax (x:xs) = if x < (head xs) then getMax xs else getMax (x:tail xs)
+
   -- * F2 
   -- | Reads a sudoku from a file, solves it and prints the solution if found
   readAndSolve :: FilePath -> IO ()

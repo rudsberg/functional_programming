@@ -151,8 +151,6 @@ isOkay sud = all isOkayBlock $ blocks sud
 
 -- | Positions are pairs (row,column),
 -- (0,0) is top left corner, (8,8) is bottom left corner
-type Pos = (Int,Int)
-
 -- * E1
 
 blanks :: Sudoku -> [Pos]
@@ -209,6 +207,7 @@ solve' sudoku blank | (not $ isSudoku sudoku) || (not $ isOkay sudoku) = []
                     | otherwise                                        = filter (\x -> isOkay x && isFilled x) solution
         where solution = concat [solve' (update sudoku (head blank) (Just c)) (drop 1 blank) | c <- [1..9]]
 
+
 -- * F2
 -- | Reads a sudoku from a file, solves it and prints the solution if found
 readAndSolve :: FilePath -> IO ()
@@ -227,8 +226,10 @@ isSolutionOf sud1 sud2 = isOkay sud1 && isFilled sud1
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound sudoku = isSudoku sudoku && isOkay sudoku ==> solveSound (solve sudoku) sudoku
     where solveSound :: Maybe Sudoku -> Sudoku -> Bool
-          solveSound (Just sudoku) sud = isSolutionOf (fromJust $ Just sudoku) sud
+          solveSound (Just sudoku) sud = isSolutionOf sudoku sud
           solveSound Nothing _         = False
 
 -- | Fewer checks that can be used instead of quickChecks standard 100 test's
 fewerChecks prop = quickCheckWith stdArgs{maxSuccess=30 } prop
+
+
