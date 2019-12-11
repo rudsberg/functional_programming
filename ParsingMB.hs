@@ -33,6 +33,7 @@ module Parsing
   , return
  ) 
 
+<<<<<<< HEAD:ParsingMB.hs
 {----------------------
 
 Aim: reusable Parser combinators including 
@@ -58,6 +59,9 @@ readsP :: Read a => Parser a
 -- parse readsP s == listToMaybe (reads s)
 
 ----------------------}
+=======
+
+>>>>>>> 0d3b2453122b330de7594a8a1c229e5b55a35fb9:Parsing.hs
 where
 
 import Data.Char
