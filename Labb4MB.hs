@@ -26,27 +26,7 @@ showExpr (BinOp name _ expr1 expr2)  = case name of
       showFactor (BinOp "+" _ expr1 expr2) = "(" ++ showExpr (add expr1 expr2) ++ ")"
       showFactor expr                      = showExpr expr
 
-
-        {-}
-            add -> case expr2 of 
-                    mul -> "(" ++ showExpr expr1 ++ ") " ++ name ++ " " ++ showExpr expr2
-            mul -> case expr2 of    
-                    add -> showExpr expr1 ++ " " ++ name ++ " (" ++ showExpr expr2 ++ ")"
-                    -}
-
-
-
------------ TEST DATA ---------------------------
-    
-test = BinOp "+" (+) (Num 1) (Num 2)
-testf = MonoOp "sin" Prelude.sin (Num 0)
-test2 = MonoOp "sin" Prelude.sin test
-
-test3 = mul (add (Num 1) (Num 2)) (add (Num 3) (Num 5))
-test4 = add (add (Num 1) (Num 2)) (add (Num 3) (Num 5))
-test5 = mul (mul (Num 1) (Num 2)) (mul (Num 3) (Num 5))
-
---------------------------------------------------
+--------------------------------------------------------
 
 x :: Expr
 x = Var
@@ -62,7 +42,27 @@ sin,cos :: Expr -> Expr
 sin x = MonoOp "sin" Prelude.sin x
 cos x = MonoOp "cos" Prelude.cos x 
 
-eval :: Expr -> Double
-eval (Num x)         = x
-eval (BinOp _ o x y) = (eval x) `o` (eval y) 
-eval (MonoOp _ o x)  = o (eval x)
+----------- TEST DATA ---------------------------
+    
+test = BinOp "+" (+) (Num 1) (Num 2)     -- = 3
+testf = MonoOp "sin" Prelude.sin (Num 0) -- = 0
+test2 = MonoOp "sin" Prelude.sin test    -- = sin(3) ca 0.14
+
+test3 = mul (add (Num 1) (Num 2)) (add (Num 3) (Num 5)) -- = 3 * 8 = 24
+test4 = add (add (Num 1) (Num 2)) (add (Num 3) (Num 5)) -- = 3 + 8 = 11
+test5 = mul (mul (Num 1) (Num 2)) (mul (Num 3) (Num 5)) -- = 1*2 * 3*5 = 2 * 15 = 30
+
+test6 = mul (mul (Var) (Num 2)) (mul (Num 3) (Num 5)) -- = 1*2 * 3*5 = 2 * 15 = 30
+
+--------------------------------------------------
+
+-- | Evaluates a given expression, where the second argument is the value of x
+eval :: Expr -> Double -> Double
+eval (Var) x            = x
+eval (Num n) _          = n
+eval (BinOp _ op i j) x = (eval i x) `op` (eval j x) 
+eval (MonoOp _ op i) x  = op (eval i x)
+
+-- | Tries to read a expression from a string
+readExpr :: String -> Maybe Expr
+readExpr = undefined
