@@ -1,5 +1,8 @@
 module Expr where 
+    import Test.QuickCheck
     import Data.List
+    import Data.Char
+    import Data.Maybe(fromJust)
     import Parsing
 
 
@@ -58,21 +61,39 @@ module Expr where
     eval (BinOp Mul e1 e2) n = eval e1 n * eval e2 n
 
     -- D -- 
+    readExpr :: String -> Maybe Expr
+    readExpr s = 
+        case parse expr s' of
+             Just (exp, "") -> return exp
+             _              -> Nothing
+        where s' = filter (not . isSpace) s
+
+
     expr, term, factor :: Parser Expr
     expr = foldl1 add <$> chain term (char '+')
     term = foldl1 mul <$> chain factor (char '*') 
-    factor = Num <$> number
-        <|> char 'x' *> return Var
-        <|> char '(' *> expr <* char ')'
+    factor = number <|> variable <|> func <|> char '(' *> expr <* char ')'
 
-    readExpr :: String -> Maybe Expr
-    readExpr s = do
-        (exp, "") <- parse expr s
-        return exp
+    number :: Parser Expr
+    number = Num <$> readsP
 
-    number :: Parser Double
-    number = read <$> oneOrMore digit
+    variable :: Parser Expr
+    variable = char 'x' *> return Var
 
-    function :: Parser Expr
-    function = undefined
-        
+    func :: Parser Expr
+    func = char 's' *> char 'i' *> char 'n' *> (MonoOp Sin <$> expr) <|>
+               char 'c' *> char 'o' *> char 's' *> (MonoOp Cos <$> expr)
+
+    -- E --
+    prop_ShowReadExpr :: Expr -> Bool
+    prop_ShowReadExpr = undefined
+
+    arbExpr :: Int -> Gen Expr
+    arbExpr = undefined
+
+    instance Arbitrary Expr where
+        arbitrary = undefined
+
+    -- 
+
+
