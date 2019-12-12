@@ -82,7 +82,7 @@ module Expr where
 
     func :: Parser Expr
     func = char 's' *> char 'i' *> char 'n' *> (MonoOp Sin <$> expr) <|>
-               char 'c' *> char 'o' *> char 's' *> (MonoOp Cos <$> expr)
+           char 'c' *> char 'o' *> char 's' *> (MonoOp Cos <$> expr)
 
     -- E --
     prop_ShowReadExpr :: Expr -> Bool
@@ -94,6 +94,11 @@ module Expr where
     instance Arbitrary Expr where
         arbitrary = undefined
 
-    -- 
+    -- F -- 
+    simplify :: Expr -> Expr
+    simplify (Num n) = undefined
 
+    -- G --
+    differentiate :: Expr -> Expr
+    differentiate = undefined
 
