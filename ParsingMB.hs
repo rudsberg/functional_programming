@@ -33,7 +33,35 @@ module Parsing
   , return
  ) 
 
+<<<<<<< HEAD:ParsingMB.hs
+{----------------------
 
+Aim: reusable Parser combinators including 
+ a new type for the Parser, 
+ but no export of the constructor
+
+Changes (v3 2016) Thomas Hallgren
+Export <* and *> from class Applicative instead of the combinators <-< and >->
+Export <|> from class Alternative instead of +++
+
+Changes (v2 2015)
+For compatibility with GHC>=7.10 Parser 
+is now also instance Applicative
+
+Removal: Class Functor, Applicative and Monad provide a number of 
+functions that were previously exported explicitly, in particular
+(>*>) is available as the bind operation (>>=),
+success is return, pmap is fmap.
+
+Additional function:
+readsP :: Read a => Parser a  
+-- satisfies 
+-- parse readsP s == listToMaybe (reads s)
+
+----------------------}
+=======
+
+>>>>>>> 0d3b2453122b330de7594a8a1c229e5b55a35fb9:Parsing.hs
 where
 
 import Data.Char
