@@ -5,6 +5,7 @@
 import ThreepennyPages
 import Graphics.UI.Threepenny.Core as UI
 import qualified Graphics.UI.Threepenny as UI
+import Expr
 
 canWidth,canHeight :: Num a => a
 canWidth  = 300
@@ -48,3 +49,7 @@ readAndDraw input canvas =
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
      path "blue" [(10,10),(canWidth-10,canHeight/2)] canvas
+
+-- H --
+points :: Expr -> Double -> (Int,Int) -> [Point]
+points = undefined
