@@ -52,4 +52,4 @@ readAndDraw input canvas =
 
 -- H --
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points = undefined
+points exp scale (x,y) = undefined

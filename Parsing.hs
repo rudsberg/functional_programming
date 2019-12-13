@@ -16,11 +16,7 @@ module Parsing
   ,parse
   -- * Basic parsers
   ,sat,item,digit
-<<<<<<< HEAD
-  ,readsP -- behaves as reads :: Read => [(a,String)]
-=======
   ,readsP -- behaves as reads :: Read a => [(a,String)]
->>>>>>> 2ac62f7f6b35531da3c6c665c8fcff261818d0ad
   , char, failure
   -- * Combining parsers
   ,oneOrMore,zeroOrMore,chain,(<:>)
@@ -38,10 +34,7 @@ module Parsing
  ) 
 
 where
-<<<<<<< HEAD
-=======
 
->>>>>>> 2ac62f7f6b35531da3c6c665c8fcff261818d0ad
 import Data.Char
 import Data.Maybe(listToMaybe)
 -- boilerplate for GHC 10.7 compatibility:
@@ -162,8 +155,4 @@ instance Monad Parser where
 
 instance Alternative Parser where
   empty = failure
-<<<<<<< HEAD
   (<|>) = (+++)
-=======
-  (<|>) = (+++)
->>>>>>> 2ac62f7f6b35531da3c6c665c8fcff261818d0ad
