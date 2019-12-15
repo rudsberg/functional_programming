@@ -5,6 +5,7 @@
 import ThreepennyPages
 import Graphics.UI.Threepenny.Core as UI
 import qualified Graphics.UI.Threepenny as UI
+import Data.Maybe
 import Expr
 
 canWidth,canHeight :: Num a => a
@@ -42,14 +43,23 @@ readAndDraw :: Element -> Canvas -> UI ()
 readAndDraw input canvas =
   do -- Get the current formula (a String) from the input element
      formula <- get value input
+     let expr = fromJust $ readExpression formula 
      -- Clear the canvas
      clearCanvas canvas
      -- The following code draws the formula text in the canvas and a blue line.
      -- It should be replaced with code that draws the graph of the function.
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
-     path "blue" [(10,10),(canWidth-10,canHeight/2)] canvas
+     path "blue" (points expr scale (290,150)) canvas
+     --path "blue" [(10,10),(canWidth-10,canHeight/2)] canvas
+     where readExpression formula = case readExpr formula of 
+                    Just exp -> Just exp
+                    Nothing -> Nothing
 
 -- H --
+scale = 0.04
+
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points exp scale (x,y) = undefined
+points exp scale (width,height) = zip x y
+  where y = map (*scale) $ map (\k -> 300-k) (map (eval exp) x)
+        x = map (*scale) $ map fromIntegral [0..300]

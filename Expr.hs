@@ -92,9 +92,9 @@ readExpr s = case parse expr s' of
 
 
 assoc :: Expr -> Expr
-assoc (BinOp Add e1 (BinOp Add e2 e3)) = assoc (add (add (assoc e1) (assoc e2)) (assoc e3))
+assoc (BinOp Add e1 (BinOp Add e2 e3)) = assoc (add (add e1 e2) e3)
 assoc (BinOp Add e1 e2)                = add (assoc e1) (assoc e2)  
-assoc (BinOp Mul (BinOp Mul e1 e2) e3) = assoc (mul (mul (assoc e1) (assoc e2)) (assoc e3))
+assoc (BinOp Mul e1 (BinOp Mul e2 e3)) = assoc (mul (mul e1 e2) e3)
 assoc (BinOp Mul e1 e2)                = mul (assoc e1) (assoc e2)
 assoc (MonoOp op e)                    = MonoOp op (assoc e)
 assoc (Num n)                          = Num n
@@ -125,13 +125,6 @@ funcparse a b c f = do c1 <- char a
                        c2 <- char b 
                        c3 <- char c
                        return f
-cosine :: Parser Expr
-cosine = ((MonoOp Cos) <$> k)
- where k = (char 'c') *> (char 'o') *> (char 's') *> factor
-                        
-sine :: Parser Expr
-sine = ((MonoOp Sin) <$> k)
-  where k = char 's' *> char 'i' *> char 'n' *> factor
 
 -- | Parses expressions
 expr, term, factor :: Parser Expr
@@ -139,13 +132,13 @@ expr   = foldl1 add <$> chain term (char '+')
 term   = foldl1 mul <$> chain factor (char '*') 
 factor = number <|> variable  <|> char '(' *> expr <* char ')' <|> sinparse <|> cosparse
 
--- | Test that showExpr and readExpr produces the same result
+-- | Test that showExpr and readExpr produces the same result 
 prop_ShowReadExpr :: Expr -> Bool
 prop_ShowReadExpr e = (assoc $ fromJust $ readExpr (showExpr e)) == assoc e 
 
 -- | Generator for arbitrary expressions
 arbExpr :: Int -> Gen Expr
-arbExpr n = frequency [(1,rNum),(1,rVar),(n,rBin),(n,rMon)]
+arbExpr n = frequency [(2,rNum),(1,rVar),(n,rBin),(n,rMon)]
     where
       range = 5
       rVar  = return Var
