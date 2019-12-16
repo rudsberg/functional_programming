@@ -22,6 +22,8 @@ setup window =
      fx      <- mkHTML "<i>f</i>(<i>x</i>)="  -- The text "f(x)="
      input   <- mkInput 20 "x"                -- The formula input
      draw    <- mkButton "Draw graph"         -- The draw button
+     zoomIn  <- mkButton "ZoomIn"             -- The zoom in button
+     zoomOut <- mkButton "ZoomOut"            -- The zoom out button
        -- The markup "<i>...</i>" means that the text inside should be rendered
        -- in italics.
 
@@ -35,12 +37,15 @@ setup window =
      pure input # set style [("fontSize","14pt")]
 
      -- Interaction (install event handlers)
-     on UI.click     draw  $ \ _ -> readAndDraw input canvas
-     on valueChange' input $ \ _ -> readAndDraw input canvas
+     on UI.click     draw  $ \ _ -> readAndDraw input 0.04 canvas
+     on UI.click     zoomIn  $ \ _ -> do 
+                let scale = 0.04*2
+                readAndDraw input scale canvas
+     on valueChange' input $ \ _ -> readAndDraw input 0.04 canvas
 
 
-readAndDraw :: Element -> Canvas -> UI ()
-readAndDraw input canvas =
+readAndDraw :: Element -> Double -> Canvas -> UI ()
+readAndDraw input scale canvas =
   do -- Get the current formula (a String) from the input element
      formula <- get value input
      let expr = fromJust $ readExpression formula 
@@ -50,16 +55,19 @@ readAndDraw input canvas =
      -- It should be replaced with code that draws the graph of the function.
      set UI.fillStyle (UI.solidColor (UI.RGB 0 0 0)) (pure canvas)
      UI.fillText formula (10,canHeight/2) canvas
-     path "blue" (points expr scale (290,150)) canvas
-     --path "blue" [(10,10),(canWidth-10,canHeight/2)] canvas
+     path "blue" (points expr scale (canWidth,canHeight)) canvas
      where readExpression formula = case readExpr formula of 
                     Just exp -> Just exp
                     Nothing -> Nothing
 
 -- H --
-scale = 0.04
 
 points :: Expr -> Double -> (Int,Int) -> [Point]
-points exp scale (width,height) = zip x y
-  where y = map (*scale) $ map (\k -> 300-k) (map (eval exp) x)
-        x = map (*scale) $ map fromIntegral [0..300]
+points exp scale (width,height) = zip mathToUIX mathToUIY
+  where y = (map (eval exp) x)
+        x = map (*scale) [-w'..w']
+        w' = fromIntegral $ canWidth `div` 2
+        h' = fromIntegral $ canHeight `div` 2
+        mathToUIX = map (\i -> w' + i/scale) x
+        mathToUIY = map (\i -> h' - i/scale) y
+    
