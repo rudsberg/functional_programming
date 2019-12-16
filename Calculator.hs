@@ -29,18 +29,20 @@ setup window =
 
      -- Add the user interface elements to the page, creating a specific layout
      formula <- row [pure fx,pure input]
-     getBody window #+ [column [pure canvas,pure formula,pure draw]]
+     getBody window #+ [column [pure canvas,pure formula,pure draw, pure zoomIn, pure zoomOut]]
 
      -- Styling
      getBody window # set style [("backgroundColor","lightblue"),
                                  ("textAlign","center")]
      pure input # set style [("fontSize","14pt")]
-
      -- Interaction (install event handlers)
      on UI.click     draw  $ \ _ -> readAndDraw input 0.04 canvas
      on UI.click     zoomIn  $ \ _ -> do 
-                let scale = 0.04*2
+                let scale = 0.04/2
                 readAndDraw input scale canvas
+     on UI.click     zoomOut  $ \ _ -> do 
+        let scale = 0.04*2
+        readAndDraw input scale canvas
      on valueChange' input $ \ _ -> readAndDraw input 0.04 canvas
 
 
