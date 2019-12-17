@@ -22,13 +22,14 @@ mkInput width init = do
              # set value init
 -- | @mkButton label@ makes a clickable button with the given label
 mkButton :: String -> UI Element
-mkButton label = set UI.style [("text-align", "center"),("color","darkBlue"),("font-size","20px")] (UI.button #+ [string label]) 
+mkButton label = set UI.style [("text-align", "center"),("color","black"),("font-size","16px")] (UI.button #+ [string label]) 
 -- | @mkSlider (min,max) init@ creates a slider
 mkSlider :: (Int,Int) -> Int -> UI Element
 mkSlider (min,max) init = UI.input # set UI.type_ "range"
                                    # set (attr "min") (show min)
                                    # set (attr "max") (show max)
                                    # set value (show init)
+                                  
 -- | @mkHTML html@ makes an element with the specified HTML content
 mkHTML :: String -> UI Element
 mkHTML html = UI.span # set UI.html html

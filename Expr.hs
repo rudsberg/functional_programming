@@ -101,6 +101,7 @@ assoc (Num n)                          = Num n
 assoc Var                              = Var 
             
 -------------PARSERS------------------------
+
  -- | Parse a number
 number :: Parser Expr
 number = Num <$> readsP 
@@ -164,11 +165,13 @@ simplify (MonoOp f x)    = simplifyFunc f (simplify x)
 
 -- | Simplifies multiplication expressions
 simplifyMul :: Expr -> Expr -> Expr
-simplifyMul (Num 0) e = Num 0
-simplifyMul e (Num 0) = Num 0
-simplifyMul e (Num 1) = e
-simplifyMul (Num 1) e = e
-simplifyMul x      y  = mul (simplify x) (simplify y)
+simplifyMul (Num 0) e          = Num 0
+simplifyMul e (Num 0)          = Num 0
+simplifyMul e (Num 1)          = e
+simplifyMul (Num 1) e          = e
+simplifyMul (Num (-1)) (Num x) = Num (-x) 
+simplifyMul (Num x) (Num (-1)) = Num (-x)
+simplifyMul x      y           = mul (simplify x) (simplify y)
 
 -- | Simplifies add expressions
 simplifyAdd :: Expr -> Expr -> Expr
@@ -194,7 +197,7 @@ differentiate :: Expr -> Expr
 differentiate (Num _)                 = Num 0
 differentiate (Var)                   = Num 1
 differentiate (BinOp Mul Var Var)     = simplify $ mul (Num 2) Var
-differentiate (BinOp Mul e1 e2)       = simplify $ add (mul (differentiate e1) e2) (mul e1 (differentiate e2))
+differentiate (BinOp Mul e1 e2)       = simplify $ add (simplify $ mul (differentiate e1) e2) (simplify $ mul e1 (differentiate e2))
 differentiate (BinOp Add e1 e2)       = simplify $ add (differentiate e1) (differentiate e2)
 differentiate (MonoOp Sin e)          = simplify $ mul (differentiate e) (MonoOp Cos e)
-differentiate (MonoOp Cos e)          = simplify $ mul (Num (-1)) (mul (differentiate e) (MonoOp Sin e))
+differentiate (MonoOp Cos e)          = simplify $ mul (Num (-1)) (simplify $ mul (differentiate e) (MonoOp Sin e))
