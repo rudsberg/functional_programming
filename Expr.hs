@@ -71,7 +71,7 @@ module Expr where
 
     expr, term, factor :: Parser Expr
     expr = foldl1 add <$> chain term (char '+')
-    term = foldl1 mul <$> chain factor (char '*') 
+    term = foldl1 mul <$> chain factor (char '*')
     factor = number <|> variable <|> func <|> char '(' *> expr <* char ')'
 
     number :: Parser Expr
