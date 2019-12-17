@@ -165,7 +165,7 @@ module ParsingExamples where
     expr, term, factor :: Parser Expr
     expr = leftAssoc Add term (char '+')
     term = leftAssoc Mul factor (char '*')
-    factor = (Num <$> number) <|> (char '(' *> expr <* char ')')
+    factor = (Num <$> number) <|>  <|> (char '(' *> expr <* char ')') 
     
     
     
