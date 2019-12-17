@@ -193,13 +193,8 @@ prop_Simplify e = (eval e 0) == (eval (simplify e) 0)
 differentiate :: Expr -> Expr
 differentiate (Num _)                 = Num 0
 differentiate (Var)                   = Num 1
-<<<<<<< HEAD
-differentiate (BinOp Mul Var Var)     = simplify $ mul (Num 2) Var
-differentiate (BinOp Mul e1 e2)       = simplify $ add (simplify $ mul (differentiate e1) e2) (simplify $ mul e1 (differentiate e2))
-=======
 differentiate (BinOp Mul Var Var)     = mul (Num 2) Var
 differentiate (BinOp Mul e1 e2)       = simplify $ add (mul (differentiate e1) e2) (mul e1 (differentiate e2))
->>>>>>> b61554d83c093724f5b00c283bfe8dc84b8a25a4
 differentiate (BinOp Add e1 e2)       = simplify $ add (differentiate e1) (differentiate e2)
 differentiate (MonoOp Sin e)          = simplify $ mul (differentiate e) (MonoOp Cos e)
 differentiate (MonoOp Cos e)          = simplify $ mul (Num (-1)) (simplify $ mul (differentiate e) (MonoOp Sin e))
